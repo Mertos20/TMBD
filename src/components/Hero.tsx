@@ -15,7 +15,7 @@ export default function Hero({ onSearch }: HeroProps) {
 
   return (
     <section
-      className="relative w-full h-[300px] overflow-hidden py-[30px] px-10"
+      className="relative w-[1528px] h-[300px] overflow-hidden py-[30px] px-10"
       // TMDB’deki yükseklikle eşleştirdim
     >
       {/* Background */}

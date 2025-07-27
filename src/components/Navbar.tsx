@@ -3,13 +3,13 @@ import Logo from "../aspects/Logo2.png";
 
 const Navbar = () => {
   return (
-    <nav className="bg-[#032541] h-[64px] flex items-center justify-center">
+    <nav className="bg-[#032541] w-[1528px] h-[64px] flex items-center justify-center">
       <div className="w-[1300px] h-[56px] flex items-center justify-between fonts-size-[16px] px-10">
         <div className="flex items-center h-[56px]">
           <a href="/">
             <img className="h-[20px] w-[154px] mr-4" src={Logo} alt="" />
           </a>
-          <ul className="flex items-center ml-8 h-[56px] py-2">
+          <ul className="flex items-center ml-8 h-[56px]">
             <li>
               <a
                 href="#"
