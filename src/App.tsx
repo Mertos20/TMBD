@@ -13,6 +13,7 @@ function App() {
       <Navbar />
       <SearchBar />
       <Hero />
+      <Trending />
     </div>
   );
 }
