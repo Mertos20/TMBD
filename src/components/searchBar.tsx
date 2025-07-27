@@ -2,7 +2,7 @@ import React from "react";
 
 const SearchBar = () => {
   return (
-    <div className="w-full h-[46px] flex justify-center items-center bg-white py-2">
+    <div className="w-full w-[1528px] h-[46px] flex justify-center items-center bg-white py-2">
       <div className="flex items-center w-full max-w-[1300px] h-[44px]  shadow-sm  pl-10 rounded">
         {/* Search Icon */}
         <svg
