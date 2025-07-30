@@ -19,7 +19,7 @@ interface TMDBItem {
 }
 
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
-const BAND_HEIGHT = 400;
+const BAND_HEIGHT = 300;
 
 const Trending: React.FC = () => {
   const [items, setItems] = useState<TMDBItem[]>([]);

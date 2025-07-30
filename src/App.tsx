@@ -6,6 +6,7 @@ import Hero from "./components/Hero";
 import Trending from "./components/Trending";
 import TrailerSection from "./components/TrailerSection";
 import Popular from "./components/Popular";
+import FreeToWatch from "./components/FreeToWatch"
 function App() {
   const [activeTab, setActiveTab] = useState<"movies" | "tv">("movies");
 
@@ -16,7 +17,8 @@ function App() {
       <Hero />
       <Trending />
       <TrailerSection/>
-      <Popular/>s
+      <Popular/>
+      <FreeToWatch/>
     </div>
   );
 }
