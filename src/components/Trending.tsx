@@ -19,7 +19,7 @@ interface TMDBItem {
 }
 
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
-const BAND_HEIGHT = 200;
+const BAND_HEIGHT = 400;
 
 const Trending: React.FC = () => {
   const [items, setItems] = useState<TMDBItem[]>([]);
@@ -62,7 +62,7 @@ const Trending: React.FC = () => {
 
       if (firstPoster) {
         const UL_PADDING_TOP = 32;
-        const ADJUST =  20;  ;
+        const ADJUST = 20;
         setBarsTop(firstPoster.offsetHeight + UL_PADDING_TOP + ADJUST);
       }
     };
@@ -73,62 +73,60 @@ const Trending: React.FC = () => {
   }, [items]);
 
   return (
-    <section className=" w-[1528px]">
-        <div className="mx-auto pt-[30px] w-[1300px]">
+    <section className=" w-[1528px] flex justify-center">
+      <div className=" pt-[30px] w-[1300px]">
+        {/* Başlık ve sekmeler */}
+        <div className="flex items-center  px-10 h-[29.6px]">
+          <h2 className="font-sans text-[24px] text-[rgb(0,0,0)] leading-[24px] font-semibold mr-5">
+            Trending
+          </h2>
 
-        
-      {/* Başlık ve sekmeler */}
-      <div className="flex items-center  px-10 h-[29.6px]">
-        <p className="text-[24px] font-bold text-[#0d253f] mr-5">Trending</p>
-        <div className="inline-flex items-center rounded-full border border-[#0d253f1a]">
-          <Tab active={period === "day"} onClick={() => setPeriod("day")}>
-            Today
-          </Tab>
-          <Tab active={period === "week"} onClick={() => setPeriod("week")}>
-            This Week
-          </Tab>
+          <div className="inline-flex items-center rounded-full border border-[#0d253f1a]">
+            <Tab active={period === "day"} onClick={() => setPeriod("day")}>
+              Today
+            </Tab>
+            <Tab active={period === "week"} onClick={() => setPeriod("week")}>
+              This Week
+            </Tab>
+          </div>
         </div>
-      </div>
 
-      
-      <div className="relative mt-6 overflow-visible ">
-        <BackgroundBars
-          width={bandWidth}
-          top={barsTop}
-          height={BAND_HEIGHT}
-          className="absolute left-0 z-[0]"
-        />
-
-   <ul
-  ref={listRef}
-  className="relative z-[10] flex w-full  overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-10 scrollbar-hide"
->
-
-  {loading
-    ? Array.from({ length: 8 }).map((_, i) => (
-        <li
-          key={i}
-          className={` shrink-0 animate-pulse rounded-xl bg-slate-200 ${
-            i !== 0 ? "ml-5" : ""
-          }`}
-        />
-      ))
-    : items.map((item, i) => (
-        <li
-          key={item.id}
-          className={`shrink-0 snap-start ${i !== 0 ? "ml-5" : ""}`}
-        >
-          <MovieCard
-            posterPath={item.poster_path}
-            title={item.title || item.name || ""}
-            date={item.release_date || item.first_air_date || ""}
-            vote={item.vote_average}
+        <div className="relative mt-6 overflow-visible ">
+          <BackgroundBars
+            width={bandWidth}
+            top={barsTop}
+            height={BAND_HEIGHT}
+            className="absolute left-0 z-[0]"
           />
-        </li>
-      ))}
-</ul>
 
-      </div>
+          <ul
+            ref={listRef}
+            className="relative z-[10] flex w-full  overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-10 scrollbar-hide"
+          >
+            {loading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <li
+                    key={i}
+                    className={` shrink-0 animate-pulse rounded-xl bg-slate-200 ${
+                      i !== 0 ? "ml-5" : ""
+                    }`}
+                  />
+                ))
+              : items.map((item, i) => (
+                  <li
+                    key={item.id}
+                    className={`shrink-0 snap-start ${i !== 0 ? "ml-5" : ""}`}
+                  >
+                    <MovieCard
+                      posterPath={item.poster_path}
+                      title={item.title || item.name || ""}
+                      date={item.release_date || item.first_air_date || ""}
+                      vote={item.vote_average}
+                    />
+                  </li>
+                ))}
+          </ul>
+        </div>
       </div>
     </section>
   );
@@ -146,11 +144,11 @@ function Tab({
   children: React.ReactNode;
 }) {
   return (
-   <button
+    <button
       onClick={onClick}
       className={`rounded-full px-5 py-[6px] text-sm font-semibold transition-colors ${
         active
-          ? "bg-[#0d253f] text-[#1ed5a9]" 
+          ? "bg-[#0d253f] text-[#1ed5a9]"
           : "text-[#0d253f] hover:bg-[#0d253f0d]"
       }`}
     >

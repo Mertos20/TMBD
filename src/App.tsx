@@ -4,7 +4,8 @@ import Navbar from "./components/Navbar";
 import SearchBar from "./components/searchBar";
 import Hero from "./components/Hero";
 import Trending from "./components/Trending";
-
+import TrailerSection from "./components/TrailerSection";
+import Popular from "./components/Popular";
 function App() {
   const [activeTab, setActiveTab] = useState<"movies" | "tv">("movies");
 
@@ -14,6 +15,8 @@ function App() {
       <SearchBar />
       <Hero />
       <Trending />
+      <TrailerSection/>
+      <Popular/>s
     </div>
   );
 }
