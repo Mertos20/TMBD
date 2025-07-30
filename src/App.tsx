@@ -6,7 +6,8 @@ import Hero from "./components/Hero";
 import Trending from "./components/Trending";
 import TrailerSection from "./components/TrailerSection";
 import Popular from "./components/Popular";
-import FreeToWatch from "./components/FreeToWatch"
+import FreeToWatch from "./components/FreeToWatch";
+import JoinSection from "./components/JoinSection" ;
 function App() {
   const [activeTab, setActiveTab] = useState<"movies" | "tv">("movies");
 
@@ -19,6 +20,7 @@ function App() {
       <TrailerSection/>
       <Popular/>
       <FreeToWatch/>
+      <JoinSection/>
     </div>
   );
 }
