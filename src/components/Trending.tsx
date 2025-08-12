@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import MovieCard from "./MovieCard";
+import { Link } from "react-router-dom";
 
 interface TMDBItem {
   id: number;
@@ -117,12 +118,16 @@ const Trending: React.FC = () => {
                     key={item.id}
                     className={`shrink-0 snap-start ${i !== 0 ? "ml-5" : ""}`}
                   >
-                    <MovieCard
-                      posterPath={item.poster_path}
-                      title={item.title || item.name || ""}
-                      date={item.release_date || item.first_air_date || ""}
-                      vote={item.vote_average}
-                    />
+                   <Link to={`/${item.media_type}/${item.id}`}>
+                      <MovieCard
+                        posterPath={item.poster_path}
+                        id={item.id}
+                        title={item.title || item.name || ""}
+                        date={item.release_date || item.first_air_date || ""}
+                        vote={item.vote_average}
+                        type={item.media_type as "movie" | "tv"}
+                      />
+                    </Link>
                   </li>
                 ))}
           </ul>

@@ -50,7 +50,7 @@ export default function TrailerCard({ item, onHover, onClick }: Props) {
       <div className="mt-2.5">
         <h2 className="text-lg font-semibold">{label}</h2>
         <h3 className="text-sm opacity-80">
-          {item.media_type === "movie" ? "Movie" : "TV Show"}
+          {item.name || item.title}
         </h3>
       </div>
     </div>

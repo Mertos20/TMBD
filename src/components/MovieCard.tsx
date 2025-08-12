@@ -1,10 +1,13 @@
 import React from "react";
+import ScoreBadge from "./ScoreBadge"
 
 export interface MovieCardProps {
   posterPath: string | null;
   title: string;
   date?: string;
   vote: number | null;
+  id: number;
+  type : "movie" | "tv";
 }
 
 const IMG = "https://image.tmdb.org/t/p/w300";
@@ -78,60 +81,4 @@ function formatDate(date?: string) {
   }
 }
 
-function ScoreBadge({ value }: { value: number | null }) {
-  const size = 44;
-  const stroke = 4;
-  const radius = (size - stroke) / 2;
-  const circumference = 2 * Math.PI * radius;
 
-  const pct = value ?? 0;
-  const dash = (pct / 100) * circumference;
-  const color = pct >= 70 ? "#21d07a" : pct >= 40 ? "#d2d531" : "#db2360";
-
-  return (
-    <div
-      className="relative flex items-center justify-center rounded-full bg-[#081c22] text-white"
-      style={{ width: 34, height: 34 }}
-    >
-      <svg
-        className="absolute left-0 top-0"
-        width={34}
-        height={34}
-        viewBox={`0 0 ${size} ${size}`}
-      >
-        <circle
-          cx={size / 2}
-          cy={size / 2}
-          r={radius}
-          stroke="#204529"
-          strokeWidth={stroke}
-          fill="transparent"
-        />
-        {value !== null && (
-          <circle
-            cx={size / 2}
-            cy={size / 2}
-            r={radius}
-            stroke={color}
-            strokeWidth={stroke}
-            fill="transparent"
-            strokeDasharray={`${dash} ${circumference - dash}`}
-            strokeLinecap="round"
-            transform={`rotate(-90 ${size / 2} ${size / 2})`}
-          />
-        )}
-      </svg>
-
-      <span className="text-[12px] font-bold leading-none">
-        {value !== null ? (
-          <>
-            {pct}
-            <sup className="text-[8px]">%</sup>
-          </>
-        ) : (
-          "NR"
-        )}
-      </span>
-    </div>
-  );
-}
