@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import MovieCard from "./MovieCard";
+import { Link } from "react-router-dom";
 
 interface TMDBItem {
   id: number;
@@ -78,7 +79,6 @@ const Popular: React.FC = () => {
   return (
     <section className=" w-[1528px] h-[430.6px] flex justify-center">
       <div className="pt-[30px] w-[1300px] h-[430.6px]">
-        
         <div className="flex items-center  px-10 h-[29.6px]">
           <h2 className="font-sans text-[24px] text-[rgb(0,0,0)] leading-[24px] font-semibold mr-5">
             What's Popular
@@ -120,12 +120,16 @@ const Popular: React.FC = () => {
                     key={item.id}
                     className={`shrink-0 snap-start ${i !== 0 ? "ml-5" : ""}`}
                   >
-                    <MovieCard
-                      posterPath={item.poster_path}
-                      title={item.title || item.name || ""}
-                      date={item.release_date || item.first_air_date || ""}
-                      vote={item.vote_average}
-                    />
+                    <Link to={`/${item.media_type}/${item.id}`}>
+                      <MovieCard
+                        posterPath={item.poster_path}
+                        id={item.id}
+                        title={item.title || item.name || ""}
+                        date={item.release_date || item.first_air_date || ""}
+                        vote={item.vote_average}
+                        type={item.media_type as "movie" | "tv"}
+                      />
+                    </Link>
                   </li>
                 ))}
           </ul>
