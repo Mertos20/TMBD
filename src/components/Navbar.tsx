@@ -1,52 +1,57 @@
 import React from "react";
 import Logo from "../aspects/Logo2.png";
 
-const Navbar = () => {
+type NavbarProps = {
+  onSearchClick: () => void;
+};
+
+const Navbar = ({ onSearchClick }: NavbarProps) => {
   return (
-    <nav className="bg-[#032541] w-[1528px] h-[64px] flex items-center justify-center">
-      <div className="w-[1300px] h-[56px] flex items-center justify-between fonts-size-[16px] px-10">
+    <nav className="bg-[#032541] w-full h-[64px] flex items-center justify-center">
+      <div className="w-[1300px] h-[56px] flex items-center justify-between px-10">
+        
+       
         <div className="flex items-center h-[56px]">
           <a href="/">
-            <img className="h-[20px] w-[154px] mr-4" src={Logo} alt="" />
+            <img
+              className="h-[20px] w-[154px] mr-4"
+              src={Logo}
+              alt="TMDB Logo"
+            />
           </a>
-          <ul className="flex items-center ml-8 h-[56px]">
-            <li>
-              <a
-                href="#"
-                className="text-white font-semibold mr-[15px] hover:text-[#01b4e4]"
-              >
-                Movies
-              </a>
+          <ul className="flex items-center ml-8 h-[56px] space-x-6 text-white font-semibold">
+            
+            
+            <li className="relative group h-full flex items-center">
+              <a href="#" className="hover:text-[#01b4e4]">Movies</a>
+              <ul className="absolute left-0 top-full bg-white text-black rounded shadow-lg w-40 hidden group-hover:block z-50">
+                <li><a href="/movie/popular" className="block px-4 py-2 hover:bg-gray-100">Popular</a></li>
+                <li><a href="/movie/now_playing" className="block px-4 py-2 hover:bg-gray-100">Now Playing</a></li>
+                <li><a href="/movie/upcoming" className="block px-4 py-2 hover:bg-gray-100">Upcoming</a></li>
+                <li><a href="/movie/top_rated" className="block px-4 py-2 hover:bg-gray-100">Top Rated</a></li>
+              </ul>
             </li>
-            <li>
-              <a
-                href="#"
-                className="ml-4 text-white font-semibold mr-[15px] hover:text-[#01b4e4]"
-              >
-                TV Shows
-              </a>
+
+            
+            <li className="relative group h-full flex items-center">
+              <a href="#" className="hover:text-[#01b4e4]">TV Shows</a>
+              <ul className="absolute left-0 top-full bg-white text-black rounded shadow-lg w-40 hidden group-hover:block z-50">
+                <li><a href="/tv/popular" className="block px-4 py-2 hover:bg-gray-100">Popular</a></li>
+                <li><a href="/tv/airing_today" className="block px-4 py-2 hover:bg-gray-100">Airing Today</a></li>
+                <li><a href="/tv/on_tv" className="block px-4 py-2 hover:bg-gray-100">On TV</a></li>
+                <li><a href="/tv/top_rated" className="block px-4 py-2 hover:bg-gray-100">Top Rated</a></li>
+              </ul>
             </li>
-            <li>
-              <a
-                href="#"
-                className="ml-4 text-white font-semibold mr-[15px] hover:text-[#01b4e4]"
-              >
-                People
-              </a>
-            </li>
-            <li>
-              <a
-                href="#"
-                className="ml-4 text-white font-semibold mr-[15px] hover:text-[#01b4e4]"
-              >
-                More
-              </a>
-            </li>
+
+            <li><a href="#" className="hover:text-[#01b4e4]">People</a></li>
+            <li><a href="#" className="hover:text-[#01b4e4]">More</a></li>
           </ul>
         </div>
 
+        
         <div className="flex items-center h-[56px]">
           <ul className="flex items-center h-[34px]">
+           
             <li>
               <button className="flex items-center justify-center w-8 h-8 ml-30">
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
@@ -89,8 +94,8 @@ const Navbar = () => {
               </a>
             </li>
             <li>
-              <button className="ml-8">
-                <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
+              <button onClick={onSearchClick} className="ml-8">
+               <svg width="28" height="28" fill="none" viewBox="0 0 24 24">
                   <circle
                     cx="11"
                     cy="11"

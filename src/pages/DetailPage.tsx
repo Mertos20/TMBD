@@ -5,12 +5,21 @@ import ScoreBadge from "../components/ScoreBadge";
 import Emoji1 from "../aspects/emoji1.svg";
 import Emoji2 from "../aspects/emoji2.svg";
 import Emoji3 from "../aspects/emoji3.svg";
+import Instagram from "../aspects/instagram.svg";
+import Facebook from "../aspects/facebook.svg";
+import Twitter from "../aspects/twitter.svg";
 
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 const IMAGE_BASE = "https://image.tmdb.org/t/p";
 
-const DetailPage: React.FC = () => {
-  const { type, id } = useParams<{ type: string; id: string }>();
+interface DetailPageProps {
+  id: string;
+  type: string;
+}
+
+
+const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
+
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -63,7 +72,7 @@ const DetailPage: React.FC = () => {
           id: data.id,
           title: data.title || data.name,
           poster_path: data.poster_path,
-          type,
+          media_type: type,
         },
       ];
     }
@@ -343,15 +352,15 @@ const DetailPage: React.FC = () => {
 
     <div className="w-[300px] flex-shrink-0 space-y-4">
       
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-2">
         <a href="#" className="hover:opacity-80">
-          <img src="/icons/facebook.svg" alt="Facebook" className="w-5 h-5" />
+          <img src={Facebook} alt="Facebook" className=" h-7" />
         </a>
         <a href="#" className="hover:opacity-80">
-          <img src="/icons/twitter.svg" alt="Twitter" className="w-5 h-5" />
+          <img src={Twitter} alt="Twitter" className="h-7" />
         </a>
         <a href="#" className="hover:opacity-80">
-          <img src="/icons/instagram.svg" alt="Instagram" className="w-5 h-5" />
+          <img src={Instagram} alt="Instagram" className=" h-7" />
         </a>
         <a href="#" className="hover:opacity-80">
           <svg
