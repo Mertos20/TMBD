@@ -6,7 +6,7 @@ const SearchBar = forwardRef<HTMLInputElement>((props, ref) => {
   const [suggestions, setSuggestions] = useState<any[]>([]);
   const navigate = useNavigate();
 
-  const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80"; 
+  const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 
   useEffect(() => {
     if (query.length >= 3) {
@@ -36,13 +36,13 @@ const SearchBar = forwardRef<HTMLInputElement>((props, ref) => {
   };
 
   return (
-    <div className="relative w-full w-[1528px] h-[46px] flex justify-center items-center bg-white py-2">
+    <div className="relative w-full h-[46px] flex justify-center items-center bg-white py-2 px-4">
       <form
         onSubmit={handleSearch}
-        className="flex items-center w-full max-w-[1300px] h-[44px] shadow-sm pl-10 rounded bg-white relative"
+        className="flex items-center w-full max-w-full md:max-w-[1300px] h-[44px] shadow-sm pl-4 md:pl-10 rounded bg-white relative"
       >
         <svg
-          className="mr-3"
+          className="mr-2 md:mr-3"
           width="24"
           height="20"
           viewBox="0 0 20 24"
@@ -64,19 +64,19 @@ const SearchBar = forwardRef<HTMLInputElement>((props, ref) => {
           ref={ref}
           type="text"
           placeholder="Search for a movie..."
-          className="w-full outline-none border-none bg-transparent text-gray-700 placeholder-gray-400 text-base"
+          className="w-full outline-none border-none bg-transparent text-gray-700 placeholder-gray-400 text-sm md:text-base"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
         />
       </form>
 
       {suggestions.length > 0 && (
-        <ul className="absolute top-[46px] left-1/2 -translate-x-1/2 bg-white shadow-md w-[1300px] max-h-[300px] overflow-y-auto z-50">
+        <ul className="absolute top-[100%] left-0 md:left-1/2 md:-translate-x-1/2 bg-white shadow-md w-full md:w-[1300px] max-h-[300px] overflow-y-auto z-50">
           {suggestions.map((item) => (
             <li
               key={item.id}
               onClick={() => handleSuggestionClick(item.title)}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer"
+              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm md:text-base"
             >
               {item.title}
             </li>

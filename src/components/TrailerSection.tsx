@@ -138,73 +138,73 @@ export default function TrailerSection() {
   };
 
   return (
-    <section className="relative w-[1528px] h-[353.34px] overflow-hidden text-white">
-      <div className=" flex justify-center ">
-        <div
-          className={`absolute right-0 top-0 h-full w-16 z-20 pointer-events-none transition-opacity duration-300 
-  ${scrollAtStart ? "opacity-100" : "opacity-0"}`}
-          style={{
-            background:
-              "linear-gradient(to left, rgba(255,255,255,0.6), transparent)",
-          }}
-        ></div>
+   <section className="relative w-full md:w-[1528px] h-auto md:h-[353.34px] overflow-hidden text-white">
+  <div className="flex justify-center">
+    <div
+      className={`absolute right-0 top-0 h-full w-16 z-20 pointer-events-none transition-opacity duration-300 
+      ${scrollAtStart ? "opacity-100" : "opacity-0"}`}
+      style={{
+        background:
+          "linear-gradient(to left, rgba(255,255,255,0.6), transparent)",
+      }}
+    ></div>
 
-        {bgBackdrop && (
-          <div
-            className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-700"
-            style={{
-              backgroundImage: `url(${bgBackdrop})`,
-            }}
-          >
-            <div className="absolute inset-0 bg-[#0d253f] bg-opacity-70 backdrop-blur-sm" />
-          </div>
-        )}
-
-        <div className="relative z-10 pt-[30px] w-[1300px] h-[353.34px]">
-          <div className="flex flex-wrap items-center w-[1300px] h-[29.6px]  px-10">
-            <h2
-              className="text-[24px] font-semibold mr-5 leading-[24px]"
-              style={{ fontFamily: '"Source Sans Pro", Arial, sans-serif' }}
-            >
-              Latest Trailers
-            </h2>
-            <div className="flex  border-[0.8px] border-[rgb(30,213,169)] rounded-full overflow-x scrollbar-thin scrollbar-thumb-white/20">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  className={`px-5 py-1 rounded-full text-sm  h-[28px] text-[16px] font-semibold transition ${
-                    activeTab === tab.key ? "bg-teal-400  text-black" : ""
-                  }`}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div
-            ref={scrollContainerRef}
-            className="flex w-[1300px] h-[293.74px] overflow-x-auto py-5 ml-4  scrollbar-thin scrollbar-hide"
-          >
-            {items.map((item) => (
-              <TrailerCard
-                key={item.id}
-                item={item}
-                onHover={() => onHover(item.backdrop_path)}
-                onClick={() => onCardClick(item)}
-              />
-            ))}
-          </div>
-        </div>
-
-        {selectedVideo && (
-          <VideoModal
-            videoId={selectedVideo}
-            onClose={() => setSelectedVideo(null)}
-          />
-        )}
+    {bgBackdrop && (
+      <div
+        className="absolute inset-0 z-0 bg-cover bg-center transition-all duration-700"
+        style={{
+          backgroundImage: `url(${bgBackdrop})`,
+        }}
+      >
+        <div className="absolute inset-0 bg-[#0d253f] bg-opacity-70 backdrop-blur-sm" />
       </div>
-    </section>
+    )}
+
+    <div className="relative z-10 pt-6 md:pt-[30px] w-full md:w-[1300px] h-auto md:h-[353.34px] px-4 md:px-0">
+      <div className="flex flex-col md:flex-row flex-wrap md:items-center w-full md:w-[1300px] h-auto md:h-[29.6px] space-y-3 md:space-y-0 md:px-10">
+        <h2
+          className="text-xl md:text-[24px] font-semibold md:mr-5 leading-[24px]"
+          style={{ fontFamily: '"Source Sans Pro", Arial, sans-serif' }}
+        >
+          Latest Trailers
+        </h2>
+        <div className="flex flex-wrap border border-[rgb(30,213,169)] rounded-full overflow-x-auto scrollbar-thin scrollbar-thumb-white/20">
+          {tabs.map((tab) => (
+            <button
+              key={tab.key}
+              onClick={() => setActiveTab(tab.key)}
+              className={`px-4 md:px-5 py-1 rounded-full text-sm text-[14px] md:text-[16px] font-semibold h-[28px] transition ${
+                activeTab === tab.key ? "bg-teal-400 text-black" : ""
+              }`}
+            >
+              {tab.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div
+        ref={scrollContainerRef}
+        className="flex w-full md:w-[1300px] h-auto md:h-[293.74px] overflow-x-auto py-4 md:py-5 ml-0 md:ml-4 scrollbar-thin scrollbar-hide"
+      >
+        {items.map((item) => (
+          <TrailerCard
+            key={item.id}
+            item={item}
+            onHover={() => onHover(item.backdrop_path)}
+            onClick={() => onCardClick(item)}
+          />
+        ))}
+      </div>
+    </div>
+
+    {selectedVideo && (
+      <VideoModal
+        videoId={selectedVideo}
+        onClose={() => setSelectedVideo(null)}
+      />
+    )}
+  </div>
+</section>
   );
 }
