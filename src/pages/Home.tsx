@@ -4,7 +4,7 @@ import Trending from "../components/Trending";
 import TrailerSection from "../components/TrailerSection";
 import Popular from "../components/Popular";
 import FreeToWatch from "../components/FreeToWatch";
-import JoinSection from "../components/JoinSection";
+
 
 const Home = () => {
   return (
@@ -14,7 +14,7 @@ const Home = () => {
       <TrailerSection />
       <Popular />
       <FreeToWatch />
-      <JoinSection />
+      
     </>
   );
 };

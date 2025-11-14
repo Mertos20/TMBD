@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import VideoModal from "../components/VideoModal";
 import ScoreBadge from "../components/ScoreBadge";
 import Emoji1 from "../aspects/emoji1.svg";
@@ -12,6 +12,8 @@ import Twitter from "../aspects/twitter.svg";
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 const IMAGE_BASE = "https://image.tmdb.org/t/p";
 
+
+
 interface DetailPageProps {
   id: string;
   type: string;
@@ -19,19 +21,25 @@ interface DetailPageProps {
 
 
 const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
-
+  const navigate = useNavigate();
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
-  const [favorites, setFavorites] = useState<any[]>([]);
+  const token = localStorage.getItem("token");
+  const [isFavorite, setIsFavorite] = useState(false);
 
+  const [comments, setComments] = useState<any[]>([]);
+  const [newComment, setNewComment] = useState("");
+  const [rating, setRating] = useState(0);
+
+  // Scroll top
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [type, id]);
 
-
+  // Film/TV detaylarını çek
   useEffect(() => {
     async function fetchDetail() {
       if (!type || !id) return;
@@ -53,29 +61,236 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
     fetchDetail();
   }, [type, id]);
 
+  
+  // Yorumları çek
   useEffect(() => {
-    const savedFavs = localStorage.getItem("favorites");
-    if (savedFavs) {
-      setFavorites(JSON.parse(savedFavs));
+    async function fetchComments() {
+      if (!id) return;
+      const token = localStorage.getItem("token");
+      const res = await fetch(`http://localhost:5000/api/comments/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setComments(data);
+      }
     }
-  }, []);
-  const toggleFavorite = () => {
-    const isAlreadyFav = favorites.some((f) => f.id === data.id);
-    const updatedFavs = isAlreadyFav
-      ? favorites.filter((f) => f.id !== data.id)
-      : [
-          ...favorites,
-          {
-            id: data.id,
-            title: data.title || data.name,
-            poster_path: data.poster_path,
-            media_type: type,
-          },
-        ];
+    fetchComments();
+  }, [id]);
 
-    setFavorites(updatedFavs);
-    localStorage.setItem("favorites", JSON.stringify(updatedFavs));
+useEffect(() => {
+  if (!token) return;
+
+  const fetchFavorite = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/favorites/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setIsFavorite(data.isFavorite);
+    } catch (err) {
+      console.error("Favori kontrol hatası:", err);
+    }
   };
+
+  fetchFavorite();
+}, [id, token]);
+
+
+ const toggleFavorite = async () => {
+  if (!token) {
+    alert("Beğenmek için giriş yap!");
+    return;
+  }
+
+  try {
+    if (isFavorite) {
+      await fetch(`http://localhost:5000/api/favorites/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIsFavorite(false);
+    } else {
+      await fetch("http://localhost:5000/api/favorites", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          movieId: id,
+          title: data.title || data.name,
+          poster_path: data.poster_path,
+          media_type: type,
+        }),
+      });
+      setIsFavorite(true);
+    }
+  } catch (error) {
+    console.error("Favori hatası:", error);
+  }
+};
+
+
+
+
+  const handleAddComment = async () => {
+    if (!newComment) return;
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5000/api/comments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ movieId: id, comment: newComment, rating }),
+    });
+
+    if (res.ok) {
+      const savedComment = await res.json();
+      setComments([savedComment, ...comments]);
+      setNewComment("");
+      setRating(0);
+    } else console.log("Error adding comment");
+  };
+
+  const handleDeleteComment = async (commentId: string) => {
+    const token = localStorage.getItem("token");
+    const res = await fetch(`http://localhost:5000/api/comments/${commentId}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (res.ok) setComments(comments.filter((c) => c._id !== commentId));
+    else console.log("Error deleting comment");
+  };
+
+ 
+const handleVibeClick = () => {
+  const token = localStorage.getItem("spotify_access_token");
+
+  
+  if (token) {
+    createVibePlaylist();
+    return;
+  }
+
+  
+  const width = 450;
+  const height = 600;
+  const left = window.screen.width / 2 - width / 2;
+  const top = window.screen.height / 2 - height / 2;
+
+  const loginUrl = "https://latanya-juicier-lanelle.ngrok-free.dev/spotify/login";
+
+  const popup = window.open(
+    loginUrl,
+    "Spotify Login",
+    `width=${width},height=${height},top=${top},left=${left}`
+  );
+
+  // ✔ popup’tan token mesajını dinle
+  const receiveToken = async (e: MessageEvent) => {
+    if (!e.origin.includes("ngrok-free.dev")) return;
+
+    const { access_token } = e.data;
+    if (access_token) {
+      localStorage.setItem("spotify_access_token", access_token);
+
+      popup?.close();
+
+      // ✔ Token alınır alınmaz otomatik playlist oluştur
+      await createVibePlaylist();
+    }
+
+    window.removeEventListener("message", receiveToken);
+  };
+
+  window.addEventListener("message", receiveToken);
+};
+
+
+
+
+
+// 🔍 Token geçerli mi kontrol eden fonksiyon
+const validateSpotifyToken = async (token: string) => {
+  try {
+    const res = await fetch("https://api.spotify.com/v1/me", {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return res.status === 200; // ✔ Geçerli token
+  } catch {
+    return false;
+  }
+};
+
+// 🎶 Playlist oluşturma
+const createVibePlaylist = async (tokenParam?: string) => {
+  const token = tokenParam || localStorage.getItem("spotify_access_token");
+
+  if (!token) {
+    alert("⚠️ Spotify token bulunamadı!");
+    return;
+  }
+
+  // 🔥 İlk iş: Token geçerli mi?
+  const isValid = await validateSpotifyToken(token);
+
+  if (!isValid) {
+    alert("⚠️ Spotify oturumun kapalı veya token süresi dolmuş!\nLütfen yeniden giriş yap.");
+    localStorage.removeItem("spotify_access_token");
+    return;
+  }
+
+  try {
+    const res = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/api/vibe", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        title: data.title || data.name,
+        overview: data.overview,
+      }),
+    });
+
+    const responseData = await res.json();
+    const tracks = Array.isArray(responseData) ? responseData : responseData.tracks || [];
+
+    if (tracks.length === 0) {
+      alert("⚠️ AI playlist boş döndü!");
+      return;
+    }
+
+    const playlistRes = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/spotify/create-playlist", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        access_token: token,
+        tracks,
+        playlist_name: `${data.title || data.name} - AI Vibe`,
+      }),
+    });
+
+    const playlistData = await playlistRes.json();
+
+    if (playlistData.success) {
+      // Yeni sekmede Spotify playlist aç
+      window.location.href = playlistData.playlist_url;
+    } else {
+      alert("⚠️ Playlist Spotify'a eklenemedi!");
+    }
+
+  } catch (error) {
+    console.error(error);
+    alert("⚠️ Playlist oluşturulurken hata oluştu!");
+  }
+};
+
+
+
+
+
 
   if (loading) return <div className="p-4">Loading...</div>;
   if (!data) return <div className="p-4">Not found</div>;
@@ -96,7 +311,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         )}
         <div className="absolute inset-0 z-10 bg-[#f8e9ed] opacity-50" />
 
-      
+
         <div className="relative z-10 flex flex-col md:flex-row w-full md:w-[1400px] h-full mx-auto px-4 md:px-10 py-[30px] text-white">
           <div className="flex-shrink-0 mx-auto md:mx-0 mb-6 md:mb-0">
             {data.poster_path && (
@@ -160,8 +375,10 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                   />
                 ))}
               </div>
+
+    
               <button
-                onClick={() => setIsModalOpen(true)}
+                onClick={handleVibeClick}
                 className="bg-[#032541] text-white px-4 py-2 rounded-full font-semibold"
               >
                 What's your Vibe ?
@@ -182,24 +399,25 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                 </svg>
               </button>
 
-              <button
-                onClick={toggleFavorite}
-                className={`w-10 h-10 rounded-full flex items-center justify-center transition ${
-                  favorites.some((f) => f.id === data.id)
-                    ? "bg-red-600"
-                    : "bg-[#081C24] hover:bg-[#0E2A33]"
-                }`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-white"
-                  fill={favorites.some((f) => f.id === data.id) ? "currentColor" : "none"}
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5..." />
-                </svg>
-              </button>
+              <button onClick={toggleFavorite} className="favorite-btn">
+  <svg
+    width="28"
+    height="28"
+    viewBox="0 0 24 24"
+    fill={isFavorite ? "#ff7f00" : "none"} // ✅ Turuncu dolgu
+    stroke="#ff7f00"
+    strokeWidth="2"
+    strokeLinecap="round"
+    strokeLinejoin="round"
+  >
+    <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 
+            2 5.42 4.42 3 7.5 3c1.74 0 3.41 0.81 4.5 2.09
+            C13.09 3.81 14.76 3 16.5 3
+            19.58 3 22 5.42 22 8.5
+            c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+  </svg>
+</button>
+
 
               {videoId && (
                 <button
@@ -227,7 +445,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         </div>
       </div>
 
-      
+      {/* Cast */}
       {data.credits?.cast?.length > 0 && (
         <div className="w-full md:w-[1400px] mx-auto px-4 md:px-10 py-[30px] flex flex-col md:flex-row gap-8">
           
@@ -253,21 +471,64 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                 </div>
               ))}
             </div>
-            {data.reviews?.results?.length > 0 && (
-              <div className="py-8">
-                <h2 className="text-2xl font-semibold mb-4">Reviews</h2>
-                {data.reviews.results.slice(0, 2).map((review: any) => (
-                  <div key={review.id} className="mb-4 p-4 border rounded-lg">
-                    <p className="font-semibold">{review.author}</p>
-                    <p className="text-sm text-gray-700">
-                      {review.content.slice(0, 300)}...
-                    </p>
-                  </div>
-                ))}
+
+            {/* Comments */}
+            <div className="mt-8 w-full md:w-[1050px] mx-auto px-4">
+              <h3 className="text-2xl font-semibold mb-4">Comments</h3>
+
+              {/* Add Comment Form */}
+              <div className="flex flex-col gap-2 mb-6">
+                <textarea
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:outline-none"
+                  placeholder="Write a comment..."
+                  value={newComment}
+                  onChange={(e) => setNewComment(e.target.value)}
+                />
+                <input
+                  type="number"
+                  min={0}
+                  max={10}
+                  value={rating}
+                  onChange={(e) => setRating(Number(e.target.value))}
+                  className="border border-gray-300 rounded-lg p-2 w-24"
+                  placeholder="Rating"
+                />
+                <button
+                  onClick={handleAddComment}
+                  className="bg-[#032541] text-white font-semibold px-4 py-2 rounded-lg hover:bg-[#0E2A33]"
+                >
+                  Add Comment
+                </button>
               </div>
-            )}
 
+              {/* Comments List */}
+              <div className="flex flex-col gap-4">
+                {comments.length === 0 && <p>No comments yet</p>}
+                {comments.map((c) => {
+                  const canDelete = c.userId === localStorage.getItem("userId");
+                  return (
+                    <div
+                      key={c._id}
+                      className="p-4 border border-black/10 rounded-lg bg-white shadow-md"
+                    >
+                      <p className="font-semibold mb-1">{c.username}</p>
+                      <p className="text-black/80 mb-2">{c.comment}</p>
+                      <p className="text-sm text-gray-500 mb-2">Rating: ⭐ {c.rating}</p>
+                      {canDelete && (
+                        <button
+                          onClick={() => handleDeleteComment(c._id)}
+                          className="text-red-600 text-sm font-semibold hover:underline"
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
 
+            {/* Recommendations */}
             {data.recommendations?.results?.length > 0 && (
               <div className="py-8">
                 <h2 className="text-2xl font-semibold mb-4">Recommendations</h2>
@@ -293,7 +554,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
             )}
           </div>
 
-         
+          {/* Sidebar */}
           <div className="w-full md:w-[300px] flex-shrink-0 space-y-4">
           
             <div className="flex items-center gap-2">
@@ -304,18 +565,12 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
               ))}
             </div>
 
-           
+
             {[
               { label: "Status", value: data.status },
               { label: "Original Language", value: data.original_language },
-              {
-                label: "Budget",
-                value: data.budget ? `$${data.budget.toLocaleString()}` : "—",
-              },
-              {
-                label: "Revenue",
-                value: data.revenue ? `$${data.revenue.toLocaleString()}` : "—",
-              },
+              { label: "Budget", value: data.budget ? `$${data.budget.toLocaleString()}` : "—" },
+              { label: "Revenue", value: data.revenue ? `$${data.revenue.toLocaleString()}` : "—" },
             ].map((item, idx) => (
               <div key={idx}>
                 <h4 className="font-semibold">{item.label}</h4>
@@ -323,7 +578,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
               </div>
             ))}
 
-          
+
             {data.keywords?.keywords?.length > 0 && (
               <div>
                 <h4 className="font-semibold mb-2">Keywords</h4>
