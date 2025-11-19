@@ -8,6 +8,8 @@ import Emoji3 from "../aspects/emoji3.svg";
 import Instagram from "../aspects/instagram.svg";
 import Facebook from "../aspects/facebook.svg";
 import Twitter from "../aspects/twitter.svg";
+import { useTheme } from "../components/ThemaContext";
+
 
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 const IMAGE_BASE = "https://image.tmdb.org/t/p";
@@ -21,6 +23,7 @@ interface DetailPageProps {
 
 
 const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
+   const { darkMode } = useTheme(); // 🌙 Tema durumu
   const navigate = useNavigate();
 
   const [data, setData] = useState<any>(null);
@@ -29,10 +32,28 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
   const [videoId, setVideoId] = useState<string | null>(null);
   const token = localStorage.getItem("token");
   const [isFavorite, setIsFavorite] = useState(false);
+  const [isWatchlist, setIsWatchlist] = useState(false);
+
 
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [rating, setRating] = useState(0);
+
+
+  useEffect(() => {
+  if (!data) return;
+
+  const consent = localStorage.getItem("cookieConsent");
+  if (!consent) return;
+
+  const genreStats = JSON.parse(localStorage.getItem("genreStats") || "{}");
+
+  data.genres?.forEach((g: any) => {
+    genreStats[g.id] = (genreStats[g.id] || 0) + 1;
+  });
+
+  localStorage.setItem("genreStats", JSON.stringify(genreStats));
+}, [data]);
 
   // Scroll top
   useEffect(() => {
@@ -98,6 +119,8 @@ useEffect(() => {
 }, [id, token]);
 
 
+
+
  const toggleFavorite = async () => {
   if (!token) {
     alert("Beğenmek için giriş yap!");
@@ -131,6 +154,63 @@ useEffect(() => {
     console.error("Favori hatası:", error);
   }
 };
+
+useEffect(() => {
+  if (!token) return;
+
+  const fetchWatchList = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/watchlists/${id}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const data = await res.json();
+      setIsWatchlist(data.isWatchlist);
+    } catch (err) {
+      console.error("watch list kontrol hatası:", err);
+    }
+  };
+
+  fetchWatchList();
+}, [id, token]);
+
+
+ const toggleWatchList = async () => {
+  if (!token) {
+    alert("Eklemek için giriş yap!");
+    return;
+  }
+
+  try {
+    if (isWatchlist) {
+      await fetch(`http://localhost:5000/api/watchlists/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIsWatchlist(false);
+    } else {
+      await fetch("http://localhost:5000/api/watchlists", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          movieId: id,
+          title: data.title || data.name,
+          poster_path: data.poster_path,
+          media_type: type,
+        }),
+      });
+      setIsWatchlist(true);
+    }
+  } catch (error) {
+    console.error("watch list hatası:", error);
+  }
+};
+
+
+
 
 
 
@@ -228,10 +308,14 @@ const validateSpotifyToken = async (token: string) => {
 
 // 🎶 Playlist oluşturma
 const createVibePlaylist = async (tokenParam?: string) => {
+
+  setLoading(true);
+
   const token = tokenParam || localStorage.getItem("spotify_access_token");
 
   if (!token) {
     alert("⚠️ Spotify token bulunamadı!");
+    setLoading(false);
     return;
   }
 
@@ -241,6 +325,7 @@ const createVibePlaylist = async (tokenParam?: string) => {
   if (!isValid) {
     alert("⚠️ Spotify oturumun kapalı veya token süresi dolmuş!\nLütfen yeniden giriş yap.");
     localStorage.removeItem("spotify_access_token");
+    setLoading(false);
     return;
   }
 
@@ -259,6 +344,7 @@ const createVibePlaylist = async (tokenParam?: string) => {
 
     if (tracks.length === 0) {
       alert("⚠️ AI playlist boş döndü!");
+      setLoading(false);
       return;
     }
 
@@ -285,6 +371,7 @@ const createVibePlaylist = async (tokenParam?: string) => {
     console.error(error);
     alert("⚠️ Playlist oluşturulurken hata oluştu!");
   }
+  setLoading(false);
 };
 
 
@@ -295,8 +382,9 @@ const createVibePlaylist = async (tokenParam?: string) => {
   if (loading) return <div className="p-4">Loading...</div>;
   if (!data) return <div className="p-4">Not found</div>;
 
-  return (
-    <div className="w-full bg-white text-black">
+   return (
+    
+    <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-black" } w-full`}>
 
       <div className="relative w-full h-auto md:h-[570px] border-b border-black/10">
         {data.backdrop_path && (
@@ -365,21 +453,12 @@ const createVibePlaylist = async (tokenParam?: string) => {
 
             <div className="flex items-center gap-4">
               <ScoreBadge value={Math.round(data.vote_average * 10)} size={60} />
-              <div className="flex gap-2">
-                {[Emoji1, Emoji2, Emoji3].map((src, i) => (
-                  <img
-                    key={i}
-                    src={src}
-                    className="h-8 bg-white/60 rounded-full p-1 transition-transform hover:scale-110"
-                    alt=""
-                  />
-                ))}
-              </div>
+              
 
     
               <button
                 onClick={handleVibeClick}
-                className="bg-[#032541] text-white px-4 py-2 rounded-full font-semibold"
+                className="bg-[#32cd32] text-white px-4 py-2 rounded-full font-semibold"
               >
                 What's your Vibe ?
               </button>
@@ -387,17 +466,44 @@ const createVibePlaylist = async (tokenParam?: string) => {
 
           
             <div className="flex items-center gap-3 mt-4 flex-wrap">
-              <button className="w-10 h-10 rounded-full bg-[#081C24] flex items-center justify-center hover:bg-[#0E2A33] transition">
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  className="w-5 h-5 text-white"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-                </svg>
-              </button>
+              <button
+  onClick={toggleWatchList}
+  className="w-10 h-10 rounded-full bg-[#081C24] flex items-center justify-center 
+             hover:bg-[#0E2A33] transition-all duration-200"
+>
+
+  {isWatchlist ? (
+    
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-6 h-6 text-green-400 animate-scale"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+      strokeWidth={2}
+    >
+      <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+    </svg>
+  ) : (
+   
+    <svg
+      xmlns="http://www.w3.org/2000/svg"
+      className="w-5 h-5 text-white"
+      fill="none"
+      viewBox="0 0 24 24"
+      stroke="currentColor"
+    >
+      <path
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        strokeWidth={2}
+        d="M4 6h16M4 12h16M4 18h16"
+      />
+    </svg>
+  )}
+
+</button>
+
 
               <button onClick={toggleFavorite} className="favorite-btn">
   <svg
@@ -490,7 +596,7 @@ const createVibePlaylist = async (tokenParam?: string) => {
                   max={10}
                   value={rating}
                   onChange={(e) => setRating(Number(e.target.value))}
-                  className="border border-gray-300 rounded-lg p-2 w-24"
+                  className="border border-gray-300 rounded-lg p-2 w-24 text-black"
                   placeholder="Rating"
                 />
                 <button

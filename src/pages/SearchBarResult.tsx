@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react";
-import { useSearchParams } from "react-router-dom";
-import { Link } from "react-router-dom";
+import { useSearchParams, Link } from "react-router-dom";
 
 const CATEGORIES = ["movie", "tv", "person"] as const;
 type Category = typeof CATEGORIES[number];
@@ -18,7 +17,6 @@ const SearchResults = () => {
 
   const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 
-  
   useEffect(() => {
     if (!query.trim()) return;
 
@@ -43,7 +41,6 @@ const SearchResults = () => {
     fetchCounts();
   }, [query]);
 
-  
   useEffect(() => {
     if (!query.trim()) return;
 
@@ -63,41 +60,47 @@ const SearchResults = () => {
   };
 
   return (
-    <div className="max-w-full md:max-w-[1300px] mx-auto mt-4 md:mt-6 flex flex-col md:flex-row gap-4 md:gap-6 px-4 md:px-6 pb-16">
+    <div className="max-w-full md:max-w-[1300px] mx-auto mt-4 md:mt-6 flex flex-col md:flex-row gap-4 md:gap-6 px-4 md:px-6 pb-16 dark:bg-gray-900">
       
-      <aside className="w-full md:w-[220px]">
-        <div className="bg-[#01b4e4] text-white p-3 font-bold rounded-t">
+      {/* Sidebar */}
+      <aside className="w-full md:w-[220px] flex-shrink-0">
+        <div className="bg-[#01b4e4] dark:bg-[#0d253f] text-white p-3 font-bold rounded-t">
           Search Results
         </div>
 
-        <ul className="bg-white shadow rounded-b divide-y">
+        <ul className="bg-white dark:bg-gray-800 shadow rounded-b divide-y divide-gray-200 dark:divide-gray-700">
           {CATEGORIES.map((cat) => (
             <li
               key={cat}
-              className={`px-4 py-2 cursor-pointer flex justify-between hover:bg-gray-100 ${
-                activeCategory === cat ? "font-bold bg-gray-100" : ""
+              className={`px-4 py-2 cursor-pointer flex justify-between hover:bg-gray-100 dark:hover:bg-gray-700/40 ${
+                activeCategory === cat
+                  ? "font-bold bg-gray-100 dark:bg-gray-700"
+                  : ""
               }`}
               onClick={() => handleCategoryChange(cat)}
             >
-              <span className="capitalize">
+              <span className="capitalize text-black dark:text-black">
                 {cat === "movie" ? "Movies" : cat === "tv" ? "TV Shows" : "People"}
               </span>
-              <span className="bg-gray-200 text-sm px-2 rounded">
+              <span className="bg-gray-200 dark:bg-gray-600 text-sm px-2 rounded text-black dark:text-black">
                 {categoryCounts[cat] ?? 0}
               </span>
             </li>
           ))}
         </ul>
-        <p className="text-xs text-gray-500 mt-3">
+
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-3">
           Tip: You can use the 'y:' filter to narrow your results by year. Example: <br />
-          <span className="font-mono bg-gray-100 px-1 rounded">star wars y:1977</span>
+          <span className="font-mono bg-gray-100 dark:bg-gray-700 px-1 rounded text-black dark:text-black">
+            star wars y:1977
+          </span>
         </p>
       </aside>
 
-      
+      {/* Results */}
       <section className="flex-1 space-y-3 md:space-y-4">
         {results.length === 0 ? (
-          <p className="text-gray-500">
+          <p className="text-gray-500 dark:text-gray-400">
             No results found for "{query}"
           </p>
         ) : (
@@ -110,7 +113,7 @@ const SearchResults = () => {
             return (
               <div
                 key={item.id}
-                className="flex bg-white rounded shadow hover:shadow-md overflow-hidden"
+                className="flex bg-white dark:bg-gray-800 rounded shadow hover:shadow-md overflow-hidden"
               >
                 <Link to={`/${activeCategory}/${item.id}`} className="shrink-0">
                   {image && (
@@ -123,11 +126,13 @@ const SearchResults = () => {
                 </Link>
 
                 <div className="p-3 md:p-4">
-                  <h2 className="text-base md:text-lg font-semibold">{title}</h2>
-                  <p className="text-xs md:text-sm text-gray-500 mb-1">{date}</p>
-                  <p className="text-sm text-gray-600">
+                  <h2 className="text-base md:text-lg font-semibold text-black dark:text-black">{title}</h2>
+                  <p className="text-xs md:text-sm text-gray-500 dark:text-gray-400 mb-1">{date}</p>
+                  <p className="text-sm text-gray-600 dark:text-gray-300">
                     {typeof overview === "string"
-                      ? (overview.length > 200 ? overview.slice(0, 200) + "..." : overview)
+                      ? overview.length > 200
+                        ? overview.slice(0, 200) + "..."
+                        : overview
                       : ""}
                   </p>
                 </div>

@@ -1,12 +1,7 @@
-import React, {
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
 import MovieCard from "./MovieCard";
 import { Link } from "react-router-dom";
+import { useTheme } from "./ThemaContext"; // 🌙 Theme Context import
 
 interface TMDBItem {
   id: number;
@@ -23,6 +18,7 @@ const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 const BAND_HEIGHT = 300;
 
 const Trending: React.FC = () => {
+  const { darkMode } = useTheme(); // 🌙 darkMode kullan
   const [items, setItems] = useState<TMDBItem[]>([]);
   const [period, setPeriod] = useState<"day" | "week">("day");
   const [loading, setLoading] = useState(false);
@@ -31,7 +27,6 @@ const Trending: React.FC = () => {
   const [bandWidth, setBandWidth] = useState(0);
   const [barsTop, setBarsTop] = useState(0);
 
-  // Trending verisini çek
   useEffect(() => {
     const run = async () => {
       setLoading(true);
@@ -48,19 +43,14 @@ const Trending: React.FC = () => {
     run();
   }, [period]);
 
-  // Barların hizasını ve genişliğini hesapla
   useLayoutEffect(() => {
     const calc = () => {
       if (!listRef.current) return;
 
-      // Sadece görünür liste kadar genişlik al
       const containerWidth = listRef.current.offsetWidth;
       setBandWidth(containerWidth);
 
-      const firstPoster = listRef.current.querySelector(
-        "[data-poster]"
-      ) as HTMLDivElement | null;
-
+      const firstPoster = listRef.current.querySelector("[data-poster]") as HTMLDivElement | null;
       if (firstPoster) {
         const UL_PADDING_TOP = 32;
         const ADJUST = 20;
@@ -74,86 +64,80 @@ const Trending: React.FC = () => {
   }, [items]);
 
   return (
-   <section className="w-full md:w-[1528px] flex justify-center">
-  <div className="pt-6 md:pt-[30px] w-full md:w-[1300px]">
-    {/* Başlık ve sekmeler */}
-    <div className="flex flex-col md:flex-row md:items-center px-4 md:px-10 gap-3 md:gap-0 h-auto md:h-[29.6px]">
-      <h2 className="font-sans text-xl md:text-[24px] text-black leading-[24px] font-semibold md:mr-5">
-        Trending
-      </h2>
+    <section className="w-full md:w-[1528px] flex justify-center">
+      <div className="pt-6 md:pt-[30px] w-full md:w-[1300px]">
+        {/* Başlık ve sekmeler */}
+        <div className="flex flex-col md:flex-row md:items-center px-4 md:px-10 gap-3 md:gap-0 h-auto md:h-[29.6px]">
+          <h2 className={`font-sans text-xl md:text-[24px] leading-[24px] font-semibold md:mr-5 ${darkMode ? "text-white" : "text-black"}`}>
+            Trending
+          </h2>
 
-      <div className="inline-flex items-center rounded-full border border-[#0d253f1a]">
-        <Tab active={period === "day"} onClick={() => setPeriod("day")}>
-          Today
-        </Tab>
-        <Tab active={period === "week"} onClick={() => setPeriod("week")}>
-          This Week
-        </Tab>
-      </div>
-    </div>
+          <div className={`inline-flex items-center rounded-full border ${darkMode ? "border-white/30" : "border-[#0d253f1a]"}`}>
+            <Tab active={period === "day"} onClick={() => setPeriod("day")}>
+              Today
+            </Tab>
+            <Tab active={period === "week"} onClick={() => setPeriod("week")}>
+              This Week
+            </Tab>
+          </div>
+        </div>
 
-    <div className="relative mt-6 overflow-visible">
-      <BackgroundBars
-        width={bandWidth}
-        top={barsTop}
-        height={BAND_HEIGHT}
-        className="absolute left-0 z-[0]"
-      />
+        <div className="relative mt-6 overflow-visible">
+          <BackgroundBars
+            width={bandWidth}
+            top={barsTop}
+            height={BAND_HEIGHT}
+            className="absolute left-0 z-[0]"
+            darkMode={darkMode} // 🌙 dark mode prop
+          />
 
-      <ul
-        ref={listRef}
-        className="relative z-[10] flex w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-0 md:ml-10 px-4 md:px-0 scrollbar-hide"
-      >
-        {loading
-          ? Array.from({ length: 8 }).map((_, i) => (
-              <li
-                key={i}
-                className={`w-[120px] h-[180px] md:w-auto md:h-auto shrink-0 animate-pulse rounded-xl bg-slate-200 ${
-                  i !== 0 ? "ml-3 md:ml-5" : ""
-                }`}
-              />
-            ))
-          : items.map((item, i) => (
-              <li
-                key={item.id}
-                className={`shrink-0 snap-start ${i !== 0 ? "ml-3 md:ml-5" : ""}`}
-              >
-                <Link to={`/${item.media_type}/${item.id}`}>
-                  <MovieCard
-                    posterPath={item.poster_path}
-                    id={item.id}
-                    title={item.title || item.name || ""}
-                    date={item.release_date || item.first_air_date || ""}
-                    vote={item.vote_average}
-                    type={item.media_type as "movie" | "tv"}
+          <ul
+            ref={listRef}
+            className="relative z-[10] flex w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-0 md:ml-10 px-4 md:px-0 scrollbar-hide"
+          >
+            {loading
+              ? Array.from({ length: 8 }).map((_, i) => (
+                  <li
+                    key={i}
+                    className={`w-[120px] h-[180px] md:w-auto md:h-auto shrink-0 animate-pulse rounded-xl bg-slate-200 ${i !== 0 ? "ml-3 md:ml-5" : ""}`}
                   />
-                </Link>
-              </li>
-            ))}
-      </ul>
-    </div>
-  </div>
-</section>
+                ))
+              : items.map((item, i) => (
+                  <li key={item.id} className={`shrink-0 snap-start ${i !== 0 ? "ml-3 md:ml-5" : ""}`}>
+                    <Link to={`/${item.media_type}/${item.id}`}>
+                      <MovieCard
+                        posterPath={item.poster_path}
+                        id={item.id}
+                        title={item.title || item.name || ""}
+                        date={item.release_date || item.first_air_date || ""}
+                        vote={item.vote_average}
+                        type={item.media_type as "movie" | "tv"}
+                      />
+                    </Link>
+                  </li>
+                ))}
+          </ul>
+        </div>
+      </div>
+    </section>
   );
 };
 
 export default Trending;
 
-function Tab({
-  active,
-  onClick,
-  children,
-}: {
-  active: boolean;
-  onClick: () => void;
-  children: React.ReactNode;
-}) {
+// 🌙 Tab component dark mode
+function Tab({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  const { darkMode } = useTheme();
   return (
     <button
       onClick={onClick}
       className={`rounded-full px-5 py-[6px] text-sm font-semibold transition-colors ${
         active
-          ? "bg-[#0d253f] text-[#1ed5a9]"
+          ? darkMode
+            ? "bg-[#1ed5a9] text-black"
+            : "bg-[#0d253f] text-[#1ed5a9]"
+          : darkMode
+          ? "text-white hover:bg-white/10"
           : "text-[#0d253f] hover:bg-[#0d253f0d]"
       }`}
     >
@@ -162,24 +146,12 @@ function Tab({
   );
 }
 
-function BackgroundBars({
-  width,
-  top,
-  height,
-  className = "",
-}: {
-  width: number;
-  top: number;
-  height: number;
-  className?: string;
-}) {
-  const barWidth = 4; // daha ince barlar
-  const gap = 5; // barlar arası boşluk azaltıldı
+// 🌙 BackgroundBars dark mode
+function BackgroundBars({ width, top, height, className = "", darkMode }: { width: number; top: number; height: number; className?: string; darkMode: boolean }) {
+  const barWidth = 4;
+  const gap = 5;
 
-  const count = useMemo(
-    () => Math.max(10, Math.floor(width / (barWidth + gap))),
-    [width]
-  );
+  const count = useMemo(() => Math.max(10, Math.floor(width / (barWidth + gap))), [width]);
 
   const bars = useMemo(() => {
     const arr: number[] = [];
@@ -187,7 +159,7 @@ function BackgroundBars({
     for (let i = 0; i < count; i++) {
       seed = (seed * 1103515245 + 12345) & 0x7fffffff;
       const rand = seed / 0x7fffffff;
-      arr.push(80 + Math.round(rand * 40)); // 80px - 120px arası yükseklik
+      arr.push(80 + Math.round(rand * 40));
     }
     return arr;
   }, [count]);
@@ -197,20 +169,18 @@ function BackgroundBars({
       aria-hidden
       className={`absolute flex items-end ${className}`}
       style={{
-        top: top - height, // tam film kartlarının altında biter
+        top: top - height,
         width,
         height,
         overflow: "hidden",
-        WebkitMaskImage:
-          "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
-        maskImage:
-          "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
+        WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
+        maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
       }}
     >
       {bars.map((h, i) => (
         <div
           key={i}
-          className="rounded-t-full bg-[#1ed5a9] opacity-80"
+          className={`rounded-t-full ${darkMode ? "bg-white/50" : "bg-[#1ed5a9]"} opacity-80`}
           style={{
             width: barWidth,
             height: h,
