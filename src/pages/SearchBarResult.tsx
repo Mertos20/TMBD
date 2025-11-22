@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
 
-const CATEGORIES = ["movie", "tv", "person"] as const;
+const CATEGORIES = ["movie", "tv"] as const;
 type Category = typeof CATEGORIES[number];
 
 const SearchResults = () => {
@@ -12,7 +12,6 @@ const SearchResults = () => {
   const [categoryCounts, setCategoryCounts] = useState<Record<Category, number>>({
     movie: 0,
     tv: 0,
-    person: 0,
   });
 
   const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
@@ -21,7 +20,7 @@ const SearchResults = () => {
     if (!query.trim()) return;
 
     const fetchCounts = async () => {
-      const counts: Record<Category, number> = { movie: 0, tv: 0, person: 0 };
+      const counts: Record<Category, number> = { movie: 0, tv: 0 };
 
       await Promise.all(
         CATEGORIES.map(async (cat) => {

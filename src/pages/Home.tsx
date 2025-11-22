@@ -6,11 +6,11 @@ import Popular from "../components/Popular";
 import FreeToWatch from "../components/FreeToWatch";
 import CookieConsent from "../components/CookieConstent";
 import Recommendations from "../components/Recommendations";
+import Chatbot from "../components/Chatbot";
 
-const Home = () => {
-  const [cookieAccepted, setCookieAccepted] = useState(false);
+const Home: React.FC = () => {
+  const [cookieAccepted, setCookieAccepted] = useState<boolean>(false);
 
-  // Sayfa yüklendiğinde localStorage kontrolü
   useEffect(() => {
     const consent = localStorage.getItem("cookieConsent");
     if (consent === "true") setCookieAccepted(true);
@@ -25,6 +25,7 @@ const Home = () => {
       <TrailerSection />
       <Popular />
       <FreeToWatch />
+      <Chatbot />
     </>
   );
 };

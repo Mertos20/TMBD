@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { useTheme } from "../components/ThemaContext"; // Dark mode context
+import { useTheme } from "../components/ThemaContext";
 
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w200";
@@ -16,6 +16,7 @@ interface Item {
   popularity?: number;
   release_date?: string;
   first_air_date?: string;
+  genre_ids?: number[];
 }
 
 interface CategoryPageProps {
@@ -37,9 +38,12 @@ const SORT_OPTIONS = [
 export default function CategoryPage({ type, category }: CategoryPageProps) {
   const [items, setItems] = useState<Item[]>([]);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<"everything" | "liked">("everything");
   const [sortBy, setSortBy] = useState("popularity.desc");
   const [token, setToken] = useState<string | null>(null);
+
+  const [genres, setGenres] = useState<{ id: number; name: string }[]>([]);
+  const [selectedGenres, setSelectedGenres] = useState<number[]>([]);
+
   const { darkMode } = useTheme();
 
   useEffect(() => {
@@ -47,7 +51,20 @@ export default function CategoryPage({ type, category }: CategoryPageProps) {
     if (t) setToken(t);
   }, []);
 
-  // Sort fonksiyonu
+  // Genre List Fetch
+  useEffect(() => {
+    fetch(`https://api.themoviedb.org/3/genre/${type}/list?api_key=${API_KEY}&language=en-US`)
+      .then(res => res.json())
+      .then(data => setGenres(data.genres || []))
+      .catch(err => console.error("Genre fetch error:", err));
+  }, [type]);
+
+  const toggleGenre = (id: number) => {
+    setSelectedGenres(prev =>
+      prev.includes(id) ? prev.filter(g => g !== id) : [...prev, id]
+    );
+  };
+
   const sortItems = (arr: Item[], sortKey: string) => {
     return [...arr].sort((a, b) => {
       switch (sortKey) {
@@ -79,113 +96,74 @@ export default function CategoryPage({ type, category }: CategoryPageProps) {
     });
   };
 
+  // Fetch items — Liked/Everything logic removed, simple discover API only
   useEffect(() => {
     setLoading(true);
 
-    const fetchFavorites = async () => {
-      if (!token) {
-        setItems([]);
-        setLoading(false);
-        return;
-      }
+    fetch(
+      `https://api.themoviedb.org/3/discover/${type}?api_key=${API_KEY}&language=en-US&sort_by=${sortBy}&with_genres=${selectedGenres.join(",")}`
+    )
+      .then(res => res.json())
+      .then(data => {
+        const sorted = sortItems(
+          (data.results || []).map((item: Item) => ({
+            ...item,
+            id: item.id || item.movieId,
+            media_type: item.media_type || (item.title ? "movie" : "tv"),
+          })),
+          sortBy
+        );
+        setItems(sorted);
+      })
+      .catch(err => console.error("API error:", err))
+      .finally(() => setLoading(false));
 
-      try {
-        const res = await fetch("http://localhost:5000/api/favorites", {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data: Item[] = await res.json();
+  }, [type, category, sortBy, selectedGenres]);
 
-        let mapped = data.map((item) => ({
-          ...item,
-          id: item.movieId,
-          media_type: item.media_type || (item.title ? "movie" : "tv"),
-        }));
-
-        mapped = sortItems(mapped, sortBy);
-
-        setItems(mapped);
-      } catch (err) {
-        console.error("Favori fetch hatası:", err);
-        setItems([]);
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    if (filter === "liked") {
-      fetchFavorites();
-    } else {
-      fetch(
-        `https://api.themoviedb.org/3/discover/${type}?api_key=${API_KEY}&language=en-US&sort_by=${sortBy}`
-      )
-        .then((res) => res.json())
-        .then((data) => {
-          const sorted = sortItems(
-            (data.results || []).map((item: Item) => ({
-              ...item,
-              id: item.id || item.movieId,
-              media_type: item.media_type || (item.title ? "movie" : "tv"),
-            })),
-            sortBy
-          );
-          setItems(sorted);
-        })
-        .catch((err) => console.error("API error:", err))
-        .finally(() => setLoading(false));
-    }
-  }, [type, category, filter, sortBy, token]);
-
-  const getItemType = (item: Item) => item.media_type || (item.title ? "movie" : "tv");
+  const getItemType = (item: Item) =>
+    item.media_type || (item.title ? "movie" : "tv");
 
   return (
     <div className={`p-6 max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 ${darkMode ? "dark" : ""}`}>
+
       {/* Sidebar */}
       <aside className="w-full lg:w-64 space-y-6">
+
         {/* Sort */}
         <div className={`border rounded p-4 ${darkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
           <h2 className="font-semibold mb-3 text-lg">Sort</h2>
           <label className="block mb-1 text-sm font-medium">Sort Results By</label>
+
           <select
             value={sortBy}
             onChange={(e) => setSortBy(e.target.value)}
-            className={`w-full p-2 border rounded focus:outline-none ${darkMode ? "bg-gray-700 text-white border-gray-600" : "bg-gray-100 text-black border-gray-300"}`}
+            className={`w-full p-2 border rounded ${darkMode ? "bg-gray-700 text-white border-gray-600" : "bg-gray-100 text-black border-gray-300"}`}
           >
-            {SORT_OPTIONS.map((opt) => (
-              <option key={opt.value} value={opt.value}>
-                {opt.label}
-              </option>
+            {SORT_OPTIONS.map(opt => (
+              <option key={opt.value} value={opt.value}>{opt.label}</option>
             ))}
           </select>
         </div>
 
-        {/* Filter */}
+        {/* Genre Filter */}
         <div className={`border rounded p-4 ${darkMode ? "bg-gray-800 text-white" : "bg-white text-black"}`}>
-          <h2 className="font-semibold mb-3 text-lg">Filters</h2>
-          <div className="space-y-2">
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                name="filter"
-                value="everything"
-                checked={filter === "everything"}
-                onChange={() => setFilter("everything")}
-                className="mr-2"
-              />
-              Everything
-            </label>
-            <label className="flex items-center cursor-pointer">
-              <input
-                type="radio"
-                name="filter"
-                value="liked"
-                checked={filter === "liked"}
-                onChange={() => setFilter("liked")}
-                className="mr-2"
-              />
-              Liked
-            </label>
+          <h2 className="font-semibold mb-3 text-lg">Genres</h2>
+
+          <div className="space-y-2 max-h-64 overflow-y-auto">
+            {genres.map(g => (
+              <label key={g.id} className="flex items-center cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={selectedGenres.includes(g.id)}
+                  onChange={() => toggleGenre(g.id)}
+                  className="mr-2"
+                />
+                {g.name}
+              </label>
+            ))}
           </div>
         </div>
+
       </aside>
 
       {/* Content */}
@@ -195,12 +173,12 @@ export default function CategoryPage({ type, category }: CategoryPageProps) {
         </h1>
 
         {loading ? (
-          <p className="text-gray-300">Loading...</p>
+          <p className="text-gray-400">Loading...</p>
         ) : items.length === 0 ? (
-          <p className="text-gray-300">No items found.</p>
+          <p className="text-gray-400">No items found.</p>
         ) : (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {items.map((item) => (
+            {items.map(item => (
               <Link
                 to={`/${getItemType(item)}/${item.id}`}
                 key={item.id}
@@ -215,6 +193,7 @@ export default function CategoryPage({ type, category }: CategoryPageProps) {
                 ) : (
                   <div className="w-full h-[300px] bg-gray-300 dark:bg-gray-700 rounded" />
                 )}
+
                 <p className="mt-2 text-sm text-center">
                   {item.title || item.name}
                 </p>
@@ -223,6 +202,7 @@ export default function CategoryPage({ type, category }: CategoryPageProps) {
           </div>
         )}
       </section>
+
     </div>
   );
 }
