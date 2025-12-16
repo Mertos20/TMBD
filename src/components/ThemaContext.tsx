@@ -16,7 +16,13 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
 
   // Dark mode değişince body'ye uygula + kaydet
   useEffect(() => {
-    document.body.className = darkMode ? "bg-black text-white" : "bg-white text-black";
+    if (darkMode) {
+      document.documentElement.classList.add("dark");
+      document.body.className = "bg-black text-white";
+    } else {
+      document.documentElement.classList.remove("dark");
+      document.body.className = "bg-white text-black";
+    }
     localStorage.setItem("darkMode", JSON.stringify(darkMode));
   }, [darkMode]);
 

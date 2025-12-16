@@ -51,19 +51,22 @@ const Recommendations: React.FC = () => {
   const fetchUserData = async () => {
     try {
       const token = localStorage.getItem("token");
-      if (!token) return { favorites: [] as Favorite[], watchlist: [] as Watchlist[] };
+      const userId = localStorage.getItem("userId");
+      if (!token || !userId) return { favorites: [] as Favorite[], watchlist: [] as Watchlist[], ratings: [] as any[] };
 
-      const [favRes, watchRes] = await Promise.all([
+      const [favRes, watchRes, ratingsRes] = await Promise.all([
         fetch("http://localhost:5000/api/favorites", { headers: { Authorization: `Bearer ${token}` } }),
         fetch("http://localhost:5000/api/watchlists", { headers: { Authorization: `Bearer ${token}` } }),
+        fetch(`http://localhost:5000/api/ratings/user/${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
       ]);
 
       const favorites: Favorite[] = await favRes.json();
       const watchlist: Watchlist[] = await watchRes.json();
-      return { favorites, watchlist };
+      const ratings: any[] = await ratingsRes.json();
+      return { favorites, watchlist, ratings };
     } catch (err) {
       console.error(err);
-      return { favorites: [], watchlist: [] };
+      return { favorites: [], watchlist: [], ratings: [] };
     }
   };
 
@@ -71,18 +74,32 @@ const Recommendations: React.FC = () => {
     const fetchRecommendations = async () => {
       setLoading(true);
       try {
-        const { favorites, watchlist } = await fetchUserData();
-        const allMovies = [...favorites, ...watchlist];
+        const { favorites, watchlist, ratings } = await fetchUserData();
+        
+        // 1. LocalStorage'dan View Stats al (1x Weight)
+        const genreStats = JSON.parse(localStorage.getItem("genreStats") || "{}");
+        const genreScores: Record<number, number> = { ...genreStats };
 
-        // Türleri say
-        const genreCount: Record<number, number> = {};
-        allMovies.forEach((movie) => {
-          movie.genre_ids?.forEach((g) => {
-            genreCount[g] = (genreCount[g] || 0) + 1;
-          });
-        });
+        // 2. Son etkileşimlerin detaylarını çekip türlerini puanla
+        const recentInteractions = [
+          ...favorites.slice(-5).map(i => ({ id: i.movieId, weight: 10 })), // Fav: 10x
+          ...watchlist.slice(-5).map(i => ({ id: i.movieId, weight: 5 })),  // Watchlist: 5x
+          ...ratings.slice(-5).map(i => ({ id: i.movieId, weight: i.rating >= 4 ? 8 : (i.rating <= 2 ? -5 : 2) })) // Rating: Dynamic
+        ];
 
-        const topGenres = Object.entries(genreCount)
+        // Detayları çek (Genre ID'leri için)
+        await Promise.all(recentInteractions.map(async (item) => {
+          try {
+            const res = await fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${API_KEY}`);
+            const data = await res.json();
+            data.genres?.forEach((g: any) => {
+              genreScores[g.id] = (genreScores[g.id] || 0) + item.weight;
+            });
+          } catch (e) { console.error(e); }
+        }));
+
+        // En yüksek puanlı 3 türü bul
+        const topGenres = Object.entries(genreScores)
           .sort((a, b) => b[1] - a[1])
           .slice(0, 3)
           .map(([g]) => g)
@@ -95,7 +112,17 @@ const Recommendations: React.FC = () => {
 
         const res = await fetch(url);
         const data = await res.json();
-        setItems(data.results || []);
+        
+        // Kullanıcının zaten bildiği filmleri filtrele
+        const knownIds = new Set([
+          ...favorites.map(f => f.movieId),
+          ...watchlist.map(w => w.movieId),
+          ...ratings.map(r => r.movieId)
+        ]);
+
+        const filtered = (data.results || []).filter((m: any) => !knownIds.has(m.id));
+        setItems(filtered);
+
       } catch (err) {
         console.error(err);
       } finally {

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import VideoModal from "../components/VideoModal";
+import Clapperboard from "../components/Clapperboard";
 import ScoreBadge from "../components/ScoreBadge";
 import Emoji1 from "../aspects/emoji1.svg";
 import Emoji2 from "../aspects/emoji2.svg";
@@ -28,6 +29,8 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
   const [data, setData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [vibeLoading, setVibeLoading] = useState(false);
+  const [clapperOpen, setClapperOpen] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [videoId, setVideoId] = useState<string | null>(null);
   const token = localStorage.getItem("token");
@@ -38,6 +41,69 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState("");
   const [rating, setRating] = useState(0);
+  const [hoverRating, setHoverRating] = useState(0);
+  const [averageRating, setAverageRating] = useState("0");
+  const [userRating, setUserRating] = useState(0);
+
+  const userId = localStorage.getItem("userId");
+
+  // Fetch Ratings
+  useEffect(() => {
+    async function fetchRatings() {
+      if (!id) return;
+      try {
+        const res = await fetch(`http://localhost:5000/api/ratings/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setAverageRating(data.average);
+          
+          if (userId) {
+            const myRating = data.ratings.find((r: any) => r.userId === userId);
+            if (myRating) setUserRating(myRating.rating);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching ratings:", err);
+      }
+    }
+    fetchRatings();
+  }, [id, userId]);
+
+  const handleRate = async (value: number) => {
+    if (!token) {
+      alert("Please login to rate!");
+      return;
+    }
+    try {
+      const res = await fetch(`http://localhost:5000/api/ratings`, {
+        method: "POST",
+        headers: { 
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}` 
+        },
+        body: JSON.stringify({ movieId: id, rating: value }),
+      });
+
+      if (res.ok) {
+        const updated = await res.json();
+        setUserRating(updated.rating);
+        // Refresh average
+        const ratingsRes = await fetch(`http://localhost:5000/api/ratings/${id}`);
+        const ratingsData = await ratingsRes.json();
+        setAverageRating(ratingsData.average);
+      } else if (res.status === 401) {
+        alert("Session expired. Please login again.");
+        localStorage.removeItem("token");
+        localStorage.removeItem("userId");
+        navigate("/login"); // Assuming you have a login route
+      } else {
+        alert("Failed to submit rating.");
+      }
+    } catch (err) {
+      console.error("Error rating:", err);
+      alert("Server error. Please check if the backend is running.");
+    }
+  };
 
 
   useEffect(() => {
@@ -218,18 +284,26 @@ useEffect(() => {
   const handleAddComment = async () => {
     if (!newComment) return;
     const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:5000/api/comments`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify({ movieId: id, comment: newComment, rating }),
-    });
+    
+    try {
+      const res = await fetch(`http://localhost:5000/api/comments`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ movieId: id, comment: newComment, rating: 0 }), 
+      });
 
-    if (res.ok) {
-      const savedComment = await res.json();
-      setComments([savedComment, ...comments]);
-      setNewComment("");
-      setRating(0);
-    } else console.log("Error adding comment");
+      if (res.ok) {
+        const savedComment = await res.json();
+        setComments([savedComment, ...comments]);
+        setNewComment("");
+      } else {
+        console.log("Error adding comment");
+        alert("Failed to add comment. Please try again.");
+      }
+    } catch (error) {
+      console.error("Error adding comment:", error);
+      alert("Server error. Please check if the backend is running.");
+    }
   };
 
   const handleDeleteComment = async (commentId: string) => {
@@ -245,14 +319,12 @@ useEffect(() => {
 
  
 const handleVibeClick = () => {
-  const token = localStorage.getItem("spotify_access_token");
-
-  
-  if (token) {
-    createVibePlaylist();
-    return;
-  }
-
+  // Always open popup to check session status
+  // const token = localStorage.getItem("spotify_access_token");
+  // if (token) {
+  //   createVibePlaylist();
+  //   return;
+  // }
   
   const width = 450;
   const height = 600;
@@ -309,69 +381,92 @@ const validateSpotifyToken = async (token: string) => {
 // 🎶 Playlist oluşturma
 const createVibePlaylist = async (tokenParam?: string) => {
 
-  setLoading(true);
+  setVibeLoading(true);
+  // Wait a brief moment for the component to mount and then close the clapper
+  setTimeout(() => setClapperOpen(false), 50);
 
   const token = tokenParam || localStorage.getItem("spotify_access_token");
 
   if (!token) {
     alert("⚠️ Spotify token bulunamadı!");
-    setLoading(false);
+    setClapperOpen(true);
+    setTimeout(() => setVibeLoading(false), 500);
     return;
   }
 
-  // 🔥 İlk iş: Token geçerli mi?
-  const isValid = await validateSpotifyToken(token);
-
-  if (!isValid) {
-    alert("⚠️ Spotify oturumun kapalı veya token süresi dolmuş!\nLütfen yeniden giriş yap.");
-    localStorage.removeItem("spotify_access_token");
-    setLoading(false);
-    return;
-  }
+  // Timeout promise
+  const timeoutPromise = new Promise((_, reject) => 
+    setTimeout(() => reject(new Error("TIMEOUT")), 15000)
+  );
 
   try {
-    const res = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/api/vibe", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: data.title || data.name,
-        overview: data.overview,
-      }),
-    });
+    await Promise.race([
+      (async () => {
+        // 🔥 İlk iş: Token geçerli mi?
+        const isValid = await validateSpotifyToken(token);
 
-    const responseData = await res.json();
-    const tracks = Array.isArray(responseData) ? responseData : responseData.tracks || [];
+        if (!isValid) {
+          alert("⚠️ Spotify oturumun kapalı veya token süresi dolmuş!\nLütfen yeniden giriş yap.");
+          localStorage.removeItem("spotify_access_token");
+          return;
+        }
 
-    if (tracks.length === 0) {
-      alert("⚠️ AI playlist boş döndü!");
-      setLoading(false);
-      return;
-    }
+        const appToken = localStorage.getItem("token");
+        const headers: any = { "Content-Type": "application/json" };
+        if (appToken) {
+          headers["Authorization"] = `Bearer ${appToken}`;
+        }
 
-    const playlistRes = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/spotify/create-playlist", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        access_token: token,
-        tracks,
-        playlist_name: `${data.title || data.name} - AI Vibe`,
-      }),
-    });
+        const res = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/api/vibe", {
+          method: "POST",
+          headers: headers,
+          body: JSON.stringify({
+            title: data.title || data.name,
+            overview: data.overview,
+          }),
+        });
 
-    const playlistData = await playlistRes.json();
+        const responseData = await res.json();
+        const tracks = Array.isArray(responseData) ? responseData : responseData.tracks || [];
 
-    if (playlistData.success) {
-      // Yeni sekmede Spotify playlist aç
-      window.location.href = playlistData.playlist_url;
-    } else {
-      alert("⚠️ Playlist Spotify'a eklenemedi!");
-    }
+        if (tracks.length === 0) {
+          alert("⚠️ AI playlist boş döndü!");
+          return;
+        }
 
-  } catch (error) {
+        const playlistRes = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/spotify/create-playlist", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            access_token: token,
+            tracks,
+            playlist_name: `${data.title || data.name} - AI Vibe`,
+          }),
+        });
+
+        const playlistData = await playlistRes.json();
+
+        if (playlistData.success) {
+          // Yeni sekmede Spotify playlist aç
+          window.location.href = playlistData.playlist_url;
+        } else {
+          alert("⚠️ Playlist Spotify'a eklenemedi!");
+        }
+      })(),
+      timeoutPromise
+    ]);
+
+  } catch (error: any) {
     console.error(error);
-    alert("⚠️ Playlist oluşturulurken hata oluştu!");
+    if (error.message === "TIMEOUT") {
+      alert("⚠️ İşlem çok uzun sürdü (15sn). Lütfen tekrar deneyin.");
+    } else {
+      alert("⚠️ Playlist oluşturulurken hata oluştu!");
+    }
+  } finally {
+    setClapperOpen(true);
+    setTimeout(() => setVibeLoading(false), 500);
   }
-  setLoading(false);
 };
 
 
@@ -385,6 +480,7 @@ const createVibePlaylist = async (tokenParam?: string) => {
    return (
     
     <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-black" } w-full`}>
+      {vibeLoading && <Clapperboard isOpen={clapperOpen} />}
 
       <div className="relative w-full h-auto md:h-[570px] border-b border-black/10">
         {data.backdrop_path && (
@@ -580,28 +676,53 @@ const createVibePlaylist = async (tokenParam?: string) => {
 
             {/* Comments */}
             <div className="mt-8 w-full md:w-[1050px] mx-auto px-4">
-              <h3 className="text-2xl font-semibold mb-4">Comments</h3>
+              <div className="flex items-center gap-4 mb-4">
+                <h3 className="text-2xl font-semibold">Comments</h3>
+                <div className="flex items-center gap-2">
+                   <span className="text-yellow-500 text-xl">★</span>
+                   <span className="font-semibold text-lg">({averageRating})</span>
+                </div>
+              </div>
+
+              {/* Rating Section */}
+              <div className="mb-6 p-4 border border-gray-200 rounded-lg bg-gray-50">
+                <h4 className="font-semibold mb-2 text-black">Rate this movie:</h4>
+                <div className="flex items-center gap-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <button
+                      key={star}
+                      type="button"
+                      className={`text-3xl transition-colors focus:outline-none ${
+                        (hoverRating || userRating) >= star ? "text-yellow-400" : "text-gray-300"
+                      }`}
+                      onMouseEnter={() => setHoverRating(star)}
+                      onMouseLeave={() => setHoverRating(0)}
+                      onClick={() => handleRate(star)}
+                    >
+                      ★
+                    </button>
+                  ))}
+                  {userRating > 0 && <span className="text-sm text-green-600 ml-2">(You rated: {userRating})</span>}
+                </div>
+              </div>
 
               {/* Add Comment Form */}
               <div className="flex flex-col gap-2 mb-6">
                 <textarea
-                  className="border border-gray-300 rounded-lg p-3 w-full focus:outline-none"
+                  className="border border-gray-300 rounded-lg p-3 w-full focus:outline-none text-black"
                   placeholder="Write a comment..."
                   value={newComment}
                   onChange={(e) => setNewComment(e.target.value)}
                 />
-                <input
-                  type="number"
-                  min={0}
-                  max={10}
-                  value={rating}
-                  onChange={(e) => setRating(Number(e.target.value))}
-                  className="border border-gray-300 rounded-lg p-2 w-24 text-black"
-                  placeholder="Rating"
-                />
+                
                 <button
                   onClick={handleAddComment}
-                  className="bg-[#032541] text-white font-semibold px-4 py-2 rounded-lg hover:bg-[#0E2A33]"
+                  disabled={!newComment}
+                  className={`font-semibold px-4 py-2 rounded-lg transition-colors w-fit ${
+                    !newComment 
+                      ? "bg-gray-400 cursor-not-allowed text-gray-200" 
+                      : "bg-[#032541] text-white hover:bg-[#0E2A33]"
+                  }`}
                 >
                   Add Comment
                 </button>
@@ -619,7 +740,6 @@ const createVibePlaylist = async (tokenParam?: string) => {
                     >
                       <p className="font-semibold mb-1">{c.username}</p>
                       <p className="text-black/80 mb-2">{c.comment}</p>
-                      <p className="text-sm text-gray-500 mb-2">Rating: ⭐ {c.rating}</p>
                       {canDelete && (
                         <button
                           onClick={() => handleDeleteComment(c._id)}

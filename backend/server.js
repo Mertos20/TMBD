@@ -13,6 +13,8 @@ import watchListRoutes from "./routes/watchList.js";
 import vibeRoutes from "./routes/vibe.js";
 import spotifyRoutes from "./routes/spotify.js";
 import chatbotRoutes from "./routes/chatbot.js"; 
+import ratingRoutes from "./routes/ratings.js";
+import gamificationRoutes from "./routes/gamification.js";
 
 const app = express();
 
@@ -39,6 +41,8 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/favorites", favoriteRoutes);
 app.use("/api/watchlists", watchListRoutes);
 app.use("/api/vibe", vibeRoutes);
+app.use("/api/ratings", ratingRoutes);
+app.use("/api/gamification", gamificationRoutes);
 app.use("/spotify", spotifyRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 

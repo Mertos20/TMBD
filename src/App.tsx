@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
@@ -15,19 +15,21 @@ import { ThemeProvider } from "./components/ThemaContext";
 
 function App() {
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const location = useLocation();
 
   const handleSearchClick = () => {
     searchInputRef.current?.focus();
   };
 
   const token = localStorage.getItem("token");
+  const hideSearchBar = ["/login", "/signup"].includes(location.pathname);
 
   return (
     <ThemeProvider>
       <div className="min-h-screen transition-colors duration-300">
         {/* Navbar ve SearchBar sabit renk */}
         <Navbar onSearchClick={handleSearchClick} />
-        <SearchBar ref={searchInputRef} />
+        {!hideSearchBar && <SearchBar ref={searchInputRef} />}
 
         {/* Sadece sayfalar ThemeProvider’dan etkilenir */}
         <div >

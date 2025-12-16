@@ -39,14 +39,27 @@ interface Watchlist {
   name?: string;
 }
 
+interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  current: number;
+  target: number;
+  unlocked: boolean;
+}
+
 const ProfilePage = () => {
   const { darkMode } = useTheme();
   const navigate = useNavigate();
 
   const [username, setUsername] = useState("");
   const [comments, setComments] = useState<(Comment & MovieData)[]>([]);
+  const [userRatings, setUserRatings] = useState<{ movieId: number; rating: number }[]>([]);
   const [favorites, setFavorites] = useState<Favorite[]>([]);
   const [watchlist, setWatchlist] = useState<Watchlist[]>([]);
+  const [badges, setBadges] = useState<Badge[]>([]);
+  const [allUnlocked, setAllUnlocked] = useState(false);
+  const [rewardCode, setRewardCode] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showFavorites, setShowFavorites] = useState(true);
 
@@ -107,6 +120,14 @@ const ProfilePage = () => {
 
         setComments(enriched);
 
+        // Ratings
+        const ratingsRes = await fetch(`http://localhost:5000/api/ratings/user/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (ratingsRes.ok) {
+          setUserRatings(await ratingsRes.json());
+        }
+
         // Favoriler
         const favRes = await fetch(`http://localhost:5000/api/favorites`, {
           headers: { Authorization: `Bearer ${token}` },
@@ -118,6 +139,18 @@ const ProfilePage = () => {
           headers: { Authorization: `Bearer ${token}` },
         });
         setWatchlist(await watchRes.json());
+
+        // Badges
+        const badgeRes = await fetch(`http://localhost:5000/api/gamification/progress`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (badgeRes.ok) {
+          const badgeData = await badgeRes.json();
+          setBadges(badgeData.badges);
+          setAllUnlocked(badgeData.allUnlocked);
+          setRewardCode(badgeData.rewardCode);
+        }
+
       } catch (err) {
         console.log("Profile fetch error:", err);
       } finally {
@@ -127,6 +160,24 @@ const ProfilePage = () => {
 
     fetchData();
   }, []);
+
+  const handleClaimReward = async () => {
+    try {
+      const res = await fetch(`http://localhost:5000/api/gamification/claim`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setRewardCode(data.code);
+        alert(`Congratulations! You won a double cinema ticket valid at all Paribu Cineverse theaters for any movie you wish.\n\nHere is your code: ${data.code}`);
+      } else {
+        alert("Could not claim reward. Please try again.");
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const displayedItems = showFavorites ? favorites : watchlist;
 
@@ -151,6 +202,55 @@ const ProfilePage = () => {
           Profile: {username}
         </h1>
 
+        {/* BADGES */}
+        <section className="mb-10">
+          <h2 className="text-xl font-semibold mb-4 text-center">Your Badges</h2>
+          <div className="flex flex-wrap justify-center gap-6">
+            {badges.map((badge) => (
+              <div key={badge.id} className="flex flex-col items-center w-24 text-center">
+                <div 
+                  className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-2 border-4 transition-all duration-500 ${
+                    badge.unlocked 
+                      ? "bg-gradient-to-br from-yellow-400 to-orange-500 border-yellow-300 shadow-lg scale-110" 
+                      : "bg-gray-300 border-gray-400 grayscale opacity-50"
+                  }`}
+                >
+                  {badge.id === 1 && "⭐"}
+                  {badge.id === 2 && "💬"}
+                  {badge.id === 3 && "❤️"}
+                  {badge.id === 4 && "📅"}
+                  {badge.id === 5 && "🎵"}
+                </div>
+                <h3 className={`font-bold text-sm ${badge.unlocked ? "text-yellow-600" : "text-gray-500"}`}>
+                  {badge.name}
+                </h3>
+                <p className="text-xs opacity-70">{badge.current}/{badge.target}</p>
+              </div>
+            ))}
+          </div>
+
+          {allUnlocked && (
+            <div className="flex justify-center mt-8">
+              {rewardCode ? (
+                <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg text-center">
+                  <p className="font-bold text-lg mb-2">🎉 Congratulations! 🎉</p>
+                  <p className="mb-2">You won a double cinema ticket valid at all Paribu Cineverse theaters!</p>
+                  <p className="font-mono text-2xl bg-white px-4 py-2 rounded border border-green-200 inline-block">
+                    {rewardCode}
+                  </p>
+                </div>
+              ) : (
+                <button
+                  onClick={handleClaimReward}
+                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:scale-105 transition-transform animate-bounce"
+                >
+                  🎁 View Reward Code
+                </button>
+              )}
+            </div>
+          )}
+        </section>
+
         {/* LAST COMMENTS */}
         <section className="mb-10">
           <h2 className="text-xl font-semibold mb-3">Your Last 5 Comments</h2>
@@ -161,7 +261,9 @@ const ProfilePage = () => {
             </p>
           ) : (
             <ul className="space-y-4">
-              {comments.map((c) => (
+              {comments.map((c) => {
+                const ratingVal = userRatings.find((r) => r.movieId === Number(c.movieId))?.rating || 0;
+                return (
                 <li
                   key={c._id}
                   className={`flex overflow-hidden border rounded ${
@@ -180,10 +282,14 @@ const ProfilePage = () => {
                   <div className="p-3 flex-1">
                     <h3 className="font-bold">{c.title || c.name}</h3>
                     <p>{c.comment}</p>
-                    <p className="text-sm opacity-70">Rating: {c.rating}/10</p>
+                    <div className="flex items-center gap-1 text-sm opacity-70 mt-1">
+                      <span>Rating:</span>
+                      <span className="text-yellow-500 text-lg">★</span>
+                      <span>{ratingVal}/5</span>
+                    </div>
                   </div>
                 </li>
-              ))}
+              )})}
             </ul>
           )}
         </section>

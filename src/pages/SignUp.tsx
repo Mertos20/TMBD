@@ -41,9 +41,9 @@ const Signup: React.FC = () => {
   };
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-green-400 to-blue-500">
-      <div className="bg-white rounded-xl shadow-lg p-10 w-full max-w-md">
-        <h2 className="text-2xl font-bold mb-6 text-center text-green-700">Sign Up</h2>
+    <div className="flex items-center justify-center min-h-screen bg-gradient-to-r from-green-400 to-blue-500 dark:from-gray-900 dark:to-black transition-colors duration-500">
+      <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-10 w-full max-w-md transition-colors duration-300">
+        <h2 className="text-2xl font-bold mb-6 text-center text-green-700 dark:text-green-400">Sign Up</h2>
         {error && <p className="text-red-500 mb-4">{error}</p>}
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <input
@@ -51,7 +51,7 @@ const Signup: React.FC = () => {
             placeholder="First Name"
             value={firstName}
             onChange={(e) => setFirstName(e.target.value)}
-            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
             required
           />
           <input
@@ -59,7 +59,7 @@ const Signup: React.FC = () => {
             placeholder="Last Name"
             value={lastName}
             onChange={(e) => setLastName(e.target.value)}
-            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
             required
           />
           <input
@@ -67,7 +67,7 @@ const Signup: React.FC = () => {
             placeholder="Username"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
             required
           />
           <input
@@ -75,7 +75,7 @@ const Signup: React.FC = () => {
             placeholder="Email"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
             required
           />
           <input
@@ -83,7 +83,7 @@ const Signup: React.FC = () => {
             placeholder="Password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
             required
           />
 
@@ -91,19 +91,19 @@ const Signup: React.FC = () => {
             type="file"
             accept="image/*"
             onChange={(e) => setAvatar(e.target.files ? e.target.files[0] : null)}
-            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500"
+            className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
           />
 
           <button
             type="submit"
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 rounded transition"
+            className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-semibold py-2 rounded transition-colors"
           >
             Sign Up
           </button>
         </form>
-        <p className="mt-4 text-sm text-center">
+        <p className="mt-4 text-sm text-center dark:text-gray-300">
           Already have an account?{" "}
-          <Link to="/login" className="text-blue-600 font-semibold hover:underline">
+          <Link to="/login" className="text-blue-600 dark:text-blue-400 font-semibold hover:underline">
             Login
           </Link>
         </p>

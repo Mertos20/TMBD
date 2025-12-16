@@ -4,10 +4,10 @@ import heroBg from "../aspects/Hero4.png";
 
 type HeroProps = {
   onSearch?: (q: string) => void;
-  username?: string; // ⭐ Kullanıcı adı prop'u
+  
 };
 
-export default function Hero({ onSearch, username = "Mert Osman Bektaş" }: HeroProps) {
+export default function Hero({ onSearch }: HeroProps) {
   const [q, setQ] = useState("");
   const navigate = useNavigate();
 
@@ -37,11 +37,7 @@ export default function Hero({ onSearch, username = "Mert Osman Bektaş" }: Hero
         {/* TEXT AREA */}
         <div className="mb-4 w-full max-w-[1220px]">
           <p className="text-white font-bold tracking-[-0.02em] text-3xl sm:text-4xl md:text-[48px] m-0 leading-tight flex items-center gap-3">
-            Welcome
-            <span className="text-[#1ed5a9] text-[32px] md:text-[44px] font-bold">
-              {username}
-            </span>
-            .
+            Welcome.
           </p>
 
           <p className="text-white font-semibold text-base sm:text-xl md:text-[30px] m-0 leading-tight">

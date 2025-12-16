@@ -13,32 +13,37 @@ router.post("/", async (req, res) => {
     console.log("User message:", message);
 
     // Gemini AI
-    let rawText;
+    let parsedData = { sentiment: "neutral", movies: [] };
+    
     try {
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      
       const prompt = `
-        You are a chatbot that suggests 10 movies or TV shows based on the user's feeling.
-        User feeling: ${message}
-        STRICT RULES:
-        - Return EXACTLY 10 titles
-        - Format: Title only, no extra text
-        - Separate with commas
+        Analyze the sentiment of the user's input: "${message}".
+        Based on this sentiment, suggest 10 movies or TV shows.
+
+        Return the result in the following JSON format:
+        {
+          "sentiment": "A short description of the detected sentiment (e.g. Happy, Melancholic, Thrilled)",
+          "movies": ["Movie 1", "Movie 2", ..., "Movie 10"]
+        }
+        Do not include any markdown formatting like \`\`\`json. Just the raw JSON string.
       `;
+
       const response = await model.generateContent(prompt);
-      rawText = response.response.text();
+      const rawText = response.response.text().replace(/```json|```/g, "").trim();
       console.log("Gemini response:", rawText);
+      
+      parsedData = JSON.parse(rawText);
     } catch (err) {
       console.error("❌ Gemini API Error:", err);
       return res.status(500).json({ error: "Gemini API failed" });
     }
 
-    const titles = rawText
-      .split(",")
-      .map(t => t.trim())
-      .slice(0, 10);
-
+    const titles = parsedData.movies.slice(0, 10);
     console.log("Parsed titles:", titles);
+    console.log("Detected sentiment:", parsedData.sentiment);
 
     // TMDB fetch
     const tmdbResults = await Promise.all(
@@ -64,7 +69,10 @@ router.post("/", async (req, res) => {
       })
     );
 
-    res.json({ reply: tmdbResults.filter(Boolean) });
+    res.json({ 
+      reply: tmdbResults.filter(Boolean),
+      sentiment: parsedData.sentiment 
+    });
 
   } catch (err) {
     console.error("❌ Chatbot Error:", err);
