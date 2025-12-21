@@ -51,10 +51,23 @@ router.delete("/:movieId", verifyToken, async (req, res) => {
   }
 });
 
-// GET /api/favorites → kullanıcı favorilerini getir
+// GET /api/favorites → kullanıcı favorilerini getir (Opsiyonel: ?userId=... ile başkasınınkini getir)
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const favorites = await Favorite.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const targetUserId = req.query.userId || req.user.id;
+    const favorites = await Favorite.find({ userId: targetUserId }).sort({ createdAt: -1 });
+    res.json(favorites);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch favorites" });
+  }
+});
+
+// GET /api/favorites/user/:userId → belirli kullanıcının favorilerini getir
+router.get("/user/:userId", verifyToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const favorites = await Favorite.find({ userId }).sort({ createdAt: -1 });
     res.json(favorites);
   } catch (err) {
     console.error(err);

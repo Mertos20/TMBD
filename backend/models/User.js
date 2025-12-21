@@ -6,6 +6,10 @@ const userSchema = new mongoose.Schema({
   password: { type: String, required: true },
   vibeCount: { type: Number, default: 0 },
   rewardCode: { type: String, default: null },
+  resetPasswordToken: { type: String },
+  resetPasswordExpires: { type: Date },
+  following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   createdAt: { type: Date, default: Date.now },
 });
 

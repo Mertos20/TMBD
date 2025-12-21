@@ -1,17 +1,28 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Logo from "../aspects/Logo2.png";
 import { useNavigate } from "react-router-dom";
-import { FaMoon, FaRegMoon } from "react-icons/fa";
+import { FaMoon, FaRegMoon, FaBell } from "react-icons/fa";
 import { useTheme } from "./ThemaContext";
 
 type NavbarProps = { onSearchClick: () => void };
 
+interface Notification {
+  _id: string;
+  sender: { username: string };
+  type: string;
+  read: boolean;
+  createdAt: string;
+}
+
 const Navbar = ({ onSearchClick }: NavbarProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useTheme();
 
   const userId = localStorage.getItem("userId");
+  const token = localStorage.getItem("token");
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -20,9 +31,45 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
     window.location.href = "/login";
   };
 
+  const fetchNotifications = async () => {
+    if (!token) return;
+    try {
+      const res = await fetch("http://localhost:5000/api/notifications", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        setNotifications(await res.json());
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const markAsRead = async (id: string) => {
+    try {
+      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+        method: "PUT",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setNotifications(notifications.map(n => n._id === id ? { ...n, read: true } : n));
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  useEffect(() => {
+    if (userId) {
+      fetchNotifications();
+      const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+      return () => clearInterval(interval);
+    }
+  }, [userId]);
+
+  const unreadCount = notifications.filter(n => !n.read).length;
+
   return (
     <>
-      <nav className="bg-[#032541] w-full h-[64px] flex items-center justify-center">
+      <nav className="bg-[#032541] w-full h-[64px] flex items-center justify-center relative z-50">
         <div className="w-[1300px] h-[56px] flex items-center justify-between px-10">
           
           {/* Logo + Desktop Menu */}
@@ -56,6 +103,18 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
                 </ul>
               </li>
 
+              {/* Duel */}
+              <li className="h-full flex items-center">
+                <a href="/duel" className="hover:text-[#01b4e4] font-bold bg-gradient-to-r from-red-500 to-purple-500 bg-clip-text text-transparent">
+                  Duel
+                </a>
+              </li>
+
+              {/* Social */}
+              <li className="h-full flex items-center">
+                <a href="/social" className="hover:text-[#01b4e4]">Social</a>
+              </li>
+
             </ul>
           </div>
 
@@ -73,6 +132,45 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
             {/* If logged in */}
             {userId ? (
               <>
+                {/* Notifications */}
+                <div className="relative">
+                  <button 
+                    onClick={() => setShowNotifications(!showNotifications)}
+                    className="relative p-1 hover:text-[#01b4e4]"
+                  >
+                    <FaBell size={20} />
+                    {unreadCount > 0 && (
+                      <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                        {unreadCount}
+                      </span>
+                    )}
+                  </button>
+
+                  {showNotifications && (
+                    <div className="absolute right-0 top-full mt-2 w-64 bg-white text-black rounded-lg shadow-xl overflow-hidden z-50 border border-gray-200">
+                      <div className="p-2 bg-gray-100 font-bold text-sm border-b">Notifications</div>
+                      <ul className="max-h-60 overflow-y-auto">
+                        {notifications.length === 0 ? (
+                          <li className="p-4 text-sm text-gray-500 text-center">No notifications</li>
+                        ) : (
+                          notifications.map((n) => (
+                            <li 
+                              key={n._id} 
+                              className={`p-3 border-b text-sm hover:bg-gray-50 ${!n.read ? "bg-blue-50" : ""}`}
+                              onClick={() => markAsRead(n._id)}
+                            >
+                              <span className="font-bold">{n.sender.username}</span> started following you.
+                              <div className="text-xs text-gray-400 mt-1">
+                                {new Date(n.createdAt).toLocaleDateString()}
+                              </div>
+                            </li>
+                          ))
+                        )}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+
                 <button onClick={() => navigate("/profile")} className="hover:text-[#01b4e4]">
                   <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" stroke="#01b4e4" strokeWidth={2}>
                     <path strokeLinecap="round" strokeLinejoin="round" d="M5.121 17.804A8.962 8.962 0 0112 15c2.21 0 4.21.896 5.879 2.346M15 11a3 3 0 11-6 0 3 3 0 016 0z" />

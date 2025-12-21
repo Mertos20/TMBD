@@ -62,11 +62,6 @@ router.get("/user/:userId", verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
 
-    // Sadece kendi yorumlarını almasını sağla
-    if (req.user.id !== userId) {
-      return res.status(403).json({ error: "Not authorized" });
-    }
-
     const comments = await Comment.find({ userId }).sort({ createdAt: -1 });
     const formattedComments = comments.map(c => ({
       ...c._doc,

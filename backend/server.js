@@ -1,6 +1,4 @@
-import dotenv from "dotenv";
-dotenv.config();
-
+import "dotenv/config";
 import http from "http";
 import express from "express";
 import mongoose from "mongoose";
@@ -15,12 +13,16 @@ import spotifyRoutes from "./routes/spotify.js";
 import chatbotRoutes from "./routes/chatbot.js"; 
 import ratingRoutes from "./routes/ratings.js";
 import gamificationRoutes from "./routes/gamification.js";
+import recommendationRoutes from "./routes/recommendations.js";
+import duelRoutes from "./routes/duel.js";
+import friendRoutes from "./routes/friends.js";
+import notificationRoutes from "./routes/notifications.js";
 
 const app = express();
 
 
 app.use(cors({
-  origin: "http://localhost:5173",
+  origin: ["http://localhost:5173", "http://localhost:5174"],
   credentials: true
 }));
 app.use(express.json());
@@ -28,10 +30,7 @@ app.use(express.json());
 
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
+mongoose.connect(process.env.MONGO_URI)
   .then(() => console.log("✅ MongoDB connected"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
 
@@ -43,6 +42,10 @@ app.use("/api/watchlists", watchListRoutes);
 app.use("/api/vibe", vibeRoutes);
 app.use("/api/ratings", ratingRoutes);
 app.use("/api/gamification", gamificationRoutes);
+app.use("/api/recommendations", recommendationRoutes);
+app.use("/api/duel", duelRoutes);
+app.use("/api/friends", friendRoutes);
+app.use("/api/notifications", notificationRoutes);
 app.use("/spotify", spotifyRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 

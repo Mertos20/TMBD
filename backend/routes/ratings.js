@@ -43,9 +43,14 @@ router.get("/:movieId", async (req, res) => {
 // Add/Update rating
 router.post("/", verifyToken, async (req, res) => {
   const { movieId, rating } = req.body;
-  if (!movieId || !rating) return res.status(400).json({ error: "Missing fields" });
+  if (!movieId || rating === undefined) return res.status(400).json({ error: "Missing fields" });
 
   try {
+    if (rating === 0) {
+      await Rating.findOneAndDelete({ movieId, userId: req.user.id });
+      return res.json({ message: "Rating removed", rating: 0 });
+    }
+
     const updatedRating = await Rating.findOneAndUpdate(
       { movieId, userId: req.user.id },
       { rating },

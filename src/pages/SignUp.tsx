@@ -15,17 +15,16 @@ const Signup: React.FC = () => {
     e.preventDefault();
 
     try {
-      const formData = new FormData();
-      formData.append("username", username);
-      formData.append("firstName", firstName);
-      formData.append("lastName", lastName);
-      formData.append("email", email);
-      formData.append("password", password);
-      if (avatar) formData.append("avatar", avatar);
-
       const res = await fetch("http://localhost:5000/api/auth/register", {
         method: "POST",
-        body: formData,
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+        }),
       });
 
       const data = await res.json();

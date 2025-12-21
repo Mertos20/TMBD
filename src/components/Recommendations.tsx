@@ -71,58 +71,31 @@ const Recommendations: React.FC = () => {
   };
 
   useEffect(() => {
+    const consent = localStorage.getItem("cookieConsent");
+    if (consent !== "true") {
+      setLoading(false);
+      return;
+    }
+
     const fetchRecommendations = async () => {
       setLoading(true);
       try {
-        const { favorites, watchlist, ratings } = await fetchUserData();
+        const token = localStorage.getItem("token");
+        const userId = localStorage.getItem("userId");
         
-        // 1. LocalStorage'dan View Stats al (1x Weight)
-        const genreStats = JSON.parse(localStorage.getItem("genreStats") || "{}");
-        const genreScores: Record<number, number> = { ...genreStats };
+        if (!token || !userId) {
+          setLoading(false);
+          return;
+        }
 
-        // 2. Son etkileşimlerin detaylarını çekip türlerini puanla
-        const recentInteractions = [
-          ...favorites.slice(-5).map(i => ({ id: i.movieId, weight: 10 })), // Fav: 10x
-          ...watchlist.slice(-5).map(i => ({ id: i.movieId, weight: 5 })),  // Watchlist: 5x
-          ...ratings.slice(-5).map(i => ({ id: i.movieId, weight: i.rating >= 4 ? 8 : (i.rating <= 2 ? -5 : 2) })) // Rating: Dynamic
-        ];
-
-        // Detayları çek (Genre ID'leri için)
-        await Promise.all(recentInteractions.map(async (item) => {
-          try {
-            const res = await fetch(`https://api.themoviedb.org/3/movie/${item.id}?api_key=${API_KEY}`);
-            const data = await res.json();
-            data.genres?.forEach((g: any) => {
-              genreScores[g.id] = (genreScores[g.id] || 0) + item.weight;
-            });
-          } catch (e) { console.error(e); }
-        }));
-
-        // En yüksek puanlı 3 türü bul
-        const topGenres = Object.entries(genreScores)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 3)
-          .map(([g]) => g)
-          .join(",");
-
-        // Eğer genre yoksa popüler filmleri al
-        const url = topGenres
-          ? `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&with_genres=${topGenres}&sort_by=popularity.desc&language=en-US&page=1`
-          : `https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=en-US&page=1`;
-
-        const res = await fetch(url);
-        const data = await res.json();
+        const res = await fetch(`http://localhost:5000/api/recommendations/${userId}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
         
-        // Kullanıcının zaten bildiği filmleri filtrele
-        const knownIds = new Set([
-          ...favorites.map(f => f.movieId),
-          ...watchlist.map(w => w.movieId),
-          ...ratings.map(r => r.movieId)
-        ]);
-
-        const filtered = (data.results || []).filter((m: any) => !knownIds.has(m.id));
-        setItems(filtered);
-
+        if (res.ok) {
+          const data = await res.json();
+          setItems(data);
+        }
       } catch (err) {
         console.error(err);
       } finally {
@@ -132,6 +105,9 @@ const Recommendations: React.FC = () => {
 
     fetchRecommendations();
   }, []);
+
+  const consent = localStorage.getItem("cookieConsent");
+  if (consent !== "true") return null;
 
   // Yeşil bar yüksekliği hesapla
   useLayoutEffect(() => {

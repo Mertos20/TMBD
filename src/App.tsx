@@ -9,7 +9,13 @@ import SearchResults from "./pages/SearchBarResult";
 import RouteHandler from "./RouteHandler";
 import Login from "./pages/Login";
 import Signup from "./pages/SignUp";
+import ForgotPassword from "./pages/ForgotPassword";
+import ResetPassword from "./pages/ResetPassword";
 import ProfilePage from "./pages/ProfilePage";
+import ProfileDetail from "./pages/ProfileDetail";
+import NotFound from "./pages/NotFound";
+import DuelPage from "./pages/DuelPage";
+import SocialPage from "./pages/SocialPage";
 
 import { ThemeProvider } from "./components/ThemaContext";
 
@@ -36,11 +42,18 @@ function App() {
           <Routes>
             <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
             <Route path="/signup" element={!token ? <Signup /> : <Navigate to="/" />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password/:token" element={<ResetPassword />} />
 
             <Route path="/" element={token ? <Home /> : <Navigate to="/login" />} />
             <Route path="/search" element={token ? <SearchResults /> : <Navigate to="/login" />} />
             <Route path="/:type/:param" element={token ? <RouteHandler /> : <Navigate to="/login" />} />
             <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
+            <Route path="/profile/:userId" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
+            <Route path="/profile-detail" element={token ? <ProfileDetail /> : <Navigate to="/login" />} />
+            <Route path="/duel" element={token ? <DuelPage /> : <Navigate to="/login" />} />
+            <Route path="/social" element={token ? <SocialPage /> : <Navigate to="/login" />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </div>
 

@@ -697,7 +697,7 @@ const createVibePlaylist = async (tokenParam?: string) => {
                       }`}
                       onMouseEnter={() => setHoverRating(star)}
                       onMouseLeave={() => setHoverRating(0)}
-                      onClick={() => handleRate(star)}
+                      onClick={() => handleRate(userRating === star ? 0 : star)}
                     >
                       ★
                     </button>

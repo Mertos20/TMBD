@@ -52,6 +52,11 @@ const Login: React.FC = () => {
             className="border px-4 py-2 rounded focus:outline-none focus:ring-2 focus:ring-green-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white dark:placeholder-gray-400 transition-colors"
             required
           />
+          <div className="text-right">
+            <Link to="/forgot-password" className="text-sm text-green-600 dark:text-green-400 hover:underline">
+              Forgot Password?
+            </Link>
+          </div>
           <button
             type="submit"
             className="bg-green-600 hover:bg-green-700 dark:bg-green-700 dark:hover:bg-green-600 text-white font-semibold py-2 rounded transition-colors"

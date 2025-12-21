@@ -80,4 +80,32 @@ router.post("/", async (req, res) => {
   }
 });
 
+router.post("/analyze-character", async (req, res) => {
+  try {
+    const { genres, totalWatched, username } = req.body;
+
+    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+
+    const prompt = `
+      Analyze the movie watching character of a user named ${username}.
+      They have watched ${totalWatched} items in total.
+      Their genre distribution is: ${genres}.
+
+      Based on this data, write a fun, insightful, and slightly humorous personality analysis (max 150 words).
+      Address the user directly. Use emojis.
+      Tell them what kind of viewer they are (e.g., "The Adrenaline Junkie", "The Hopeless Romantic", "The Intellectual", etc.).
+    `;
+
+    const result = await model.generateContent(prompt);
+    const response = await result.response;
+    const text = response.text();
+
+    res.json({ analysis: text });
+  } catch (error) {
+    console.error("AI Analysis Error:", error);
+    res.status(500).json({ error: "Failed to analyze character" });
+  }
+});
+
 export default router;

@@ -51,10 +51,23 @@ router.delete("/:movieId", verifyToken, async (req, res) => {
   }
 });
 
-// GET /api/favorites → kullanıcı favorilerini getir
+// GET /api/watchlists → kullanıcı listesini getir (Opsiyonel: ?userId=... ile başkasınınkini getir)
 router.get("/", verifyToken, async (req, res) => {
   try {
-    const watchlists = await WatchList.find({ userId: req.user.id }).sort({ createdAt: -1 });
+    const targetUserId = req.query.userId || req.user.id;
+    const watchlists = await WatchList.find({ userId: targetUserId }).sort({ createdAt: -1 });
+    res.json(watchlists);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to fetch watchlist" });
+  }
+});
+
+// GET /api/watchlists/user/:userId → belirli kullanıcının listesini getir
+router.get("/user/:userId", verifyToken, async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const watchlists = await WatchList.find({ userId }).sort({ createdAt: -1 });
     res.json(watchlists);
   } catch (err) {
     console.error(err);
