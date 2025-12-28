@@ -10,6 +10,11 @@ const userSchema = new mongoose.Schema({
   resetPasswordExpires: { type: Date },
   following: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
   followers: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+  isPrivate: { type: Boolean, default: false },
+  isAdmin: { type: Boolean, default: false },
+  isSuspended: { type: Boolean, default: false },
+  suspendedAt: { type: Date },
+  suspendedReason: { type: String },
   createdAt: { type: Date, default: Date.now },
 });
 

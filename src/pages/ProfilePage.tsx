@@ -68,6 +68,14 @@ const ProfilePage = () => {
   const [followingCount, setFollowingCount] = useState(0);
   const [showFollowModal, setShowFollowModal] = useState<"followers" | "following" | null>(null);
   const [modalUsers, setModalUsers] = useState<{ _id: string; username: string }[]>([]);
+  
+  // Privacy states
+  const [isPrivateAccount, setIsPrivateAccount] = useState(false);
+  const [hasPendingRequest, setHasPendingRequest] = useState(false);
+  const [canViewProfile, setCanViewProfile] = useState(true);
+  const [myPrivacySetting, setMyPrivacySetting] = useState(false);
+  const [followRequests, setFollowRequests] = useState<any[]>([]);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
 
   const token = localStorage.getItem("token");
   const currentUserId = localStorage.getItem("userId");
@@ -98,6 +106,8 @@ const ProfilePage = () => {
       setWatchlist([]);
       setUserRatings([]);
       setBadges([]);
+      setIsFollowing(false);
+      setHasPendingRequest(false);
       
       try {
         // 1. Kullanıcı Bilgisi
@@ -106,17 +116,53 @@ const ProfilePage = () => {
 
         if (isOwnProfile) {
           setUsername(localStorage.getItem("username") || "");
+          // Fetch my privacy setting
+          const privacyRes = await fetch("http://localhost:5000/api/auth/privacy-status", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (privacyRes.ok) {
+            const privacyData = await privacyRes.json();
+            setMyPrivacySetting(privacyData.isPrivate);
+          }
+          // Fetch follow requests
+          const requestsRes = await fetch("http://localhost:5000/api/friends/requests", {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          if (requestsRes.ok) {
+            setFollowRequests(await requestsRes.json());
+          }
         } else {
           setUsername(userData.username);
+          setIsPrivateAccount(userData.isPrivate || false);
           
-          // Takip durumu kontrolü
-          if (userData.followers && userData.followers.includes(currentUserId)) {
-            setIsFollowing(true);
+          // Check if following
+          const amIFollowing = userData.followers?.includes(currentUserId);
+          setIsFollowing(amIFollowing);
+          
+          // Check if can view profile (not private OR already following)
+          if (userData.isPrivate && !amIFollowing) {
+            setCanViewProfile(false);
+            // Check pending request status
+            const reqStatusRes = await fetch(`http://localhost:5000/api/friends/request-status/${targetUserId}`, {
+              headers: { Authorization: `Bearer ${token}` }
+            });
+            if (reqStatusRes.ok) {
+              const reqData = await reqStatusRes.json();
+              setHasPendingRequest(reqData.hasPendingRequest);
+            }
+          } else {
+            setCanViewProfile(true);
           }
         }
 
         setFollowersCount(userData.followers?.length || 0);
         setFollowingCount(userData.following?.length || 0);
+
+        // If can't view profile, skip fetching private data
+        if (!isOwnProfile && userData.isPrivate && !userData.followers?.includes(currentUserId)) {
+          setLoading(false);
+          return;
+        }
 
         // Yorumlar
         const commentsRes = await fetch(
@@ -173,23 +219,20 @@ const ProfilePage = () => {
         });
         setWatchlist(await watchRes.json());
 
-        // Badges (Sadece kendi profilimizde veya public badge endpointi varsa)
-        // Şimdilik sadece kendi profilimizde gösterelim veya endpointi güncelleyelim.
-        // Gamification endpointi şu an sadece req.user.id'ye bakıyor.
-        // Başkasının badge'lerini görmek için endpoint güncellemesi gerekir.
-        // Şimdilik sadece kendi profilimizde çalışsın.
-        if (isOwnProfile) {
-          const badgeRes = await fetch(`http://localhost:5000/api/gamification/progress`, {
-            headers: { Authorization: `Bearer ${token}` },
-          });
-          if (badgeRes.ok) {
-            const badgeData = await badgeRes.json();
-            setBadges(badgeData.badges);
-            setAllUnlocked(badgeData.allUnlocked);
+        // Badges (Artık herkesin badge'lerini görebiliriz)
+        const badgeRes = await fetch(`http://localhost:5000/api/gamification/progress?userId=${targetUserId}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        if (badgeRes.ok) {
+          const badgeData = await badgeRes.json();
+          setBadges(badgeData.badges);
+          setAllUnlocked(badgeData.allUnlocked);
+          // Reward code sadece kendi profilimizde görünsün
+          if (isOwnProfile) {
             setRewardCode(badgeData.rewardCode);
+          } else {
+            setRewardCode(null);
           }
-        } else {
-            setBadges([]); // Başkasının badge'lerini şimdilik boş geçiyoruz
         }
 
       } catch (err) {
@@ -221,13 +264,79 @@ const ProfilePage = () => {
   };
 
   const handleFollowToggle = async () => {
-    const endpoint = isFollowing ? "unfollow" : "follow";
+    if (isFollowing) {
+      // Unfollow
+      try {
+        await fetch(`http://localhost:5000/api/friends/unfollow/${targetUserId}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        setIsFollowing(false);
+        setFollowersCount(prev => prev - 1);
+        if (isPrivateAccount) {
+          setCanViewProfile(false);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    } else {
+      // Follow or send request
+      try {
+        const res = await fetch(`http://localhost:5000/api/friends/follow/${targetUserId}`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await res.json();
+        
+        if (data.requestSent) {
+          // Private account - request sent
+          setHasPendingRequest(true);
+        } else {
+          // Public account - followed directly
+          setIsFollowing(true);
+          setFollowersCount(prev => prev + 1);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+    }
+  };
+
+  const handleTogglePrivacy = async () => {
     try {
-      await fetch(`http://localhost:5000/api/friends/${endpoint}/${targetUserId}`, {
+      const res = await fetch("http://localhost:5000/api/auth/toggle-private", {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
-      setIsFollowing(!isFollowing);
+      if (res.ok) {
+        const data = await res.json();
+        setMyPrivacySetting(data.isPrivate);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleAcceptRequest = async (requestId: string) => {
+    try {
+      await fetch(`http://localhost:5000/api/friends/requests/${requestId}/accept`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFollowRequests(prev => prev.filter(r => r._id !== requestId));
+      setFollowersCount(prev => prev + 1);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleRejectRequest = async (requestId: string) => {
+    try {
+      await fetch(`http://localhost:5000/api/friends/requests/${requestId}/reject`, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setFollowRequests(prev => prev.filter(r => r._id !== requestId));
     } catch (err) {
       console.error(err);
     }
@@ -274,28 +383,58 @@ const ProfilePage = () => {
           <div className="flex items-center gap-4">
             <h1 className="text-3xl font-bold">
               {username}
+              {!isOwnProfile && isPrivateAccount && (
+                <span className="ml-2 text-sm opacity-60">🔒</span>
+              )}
             </h1>
             {isOwnProfile && (
-              <button
-                onClick={() => navigate("/profile-detail")}
-                className="w-10 h-10 flex items-center justify-center bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 transition-colors"
-                title="View Statistics"
-              >
-                📊
-              </button>
+              <>
+                <button
+                  onClick={() => navigate("/profile-detail")}
+                  className="w-10 h-10 flex items-center justify-center bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 transition-colors"
+                  title="View Statistics"
+                >
+                  📊
+                </button>
+                <button
+                  onClick={handleTogglePrivacy}
+                  className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all ${
+                    myPrivacySetting 
+                      ? "bg-yellow-500 text-white hover:bg-yellow-600" 
+                      : "bg-gray-500 text-white hover:bg-gray-600"
+                  }`}
+                  title={myPrivacySetting ? "Account is Private" : "Account is Public"}
+                >
+                  {myPrivacySetting ? "🔒 Private" : "🌐 Public"}
+                </button>
+                {followRequests.length > 0 && (
+                  <button
+                    onClick={() => setShowRequestsModal(true)}
+                    className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold text-sm hover:bg-red-600 transition-all relative"
+                  >
+                    📩 Requests
+                    <span className="absolute -top-2 -right-2 w-5 h-5 bg-white text-red-500 rounded-full text-xs flex items-center justify-center font-bold">
+                      {followRequests.length}
+                    </span>
+                  </button>
+                )}
+              </>
             )}
           </div>
           
           {!isOwnProfile && (
             <button
               onClick={handleFollowToggle}
+              disabled={hasPendingRequest}
               className={`px-6 py-2 rounded-full font-bold transition-all ${
                 isFollowing 
                   ? "bg-gray-500 text-white hover:bg-gray-600" 
-                  : "bg-blue-600 text-white hover:bg-blue-700"
+                  : hasPendingRequest
+                    ? "bg-yellow-500 text-white cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700"
               }`}
             >
-              {isFollowing ? "Unfollow" : "Follow"}
+              {isFollowing ? "Unfollow" : hasPendingRequest ? "Request Sent" : "Follow"}
             </button>
           )}
 
@@ -309,10 +448,46 @@ const ProfilePage = () => {
           </div>
         </div>
 
-        {/* BADGES (Only show if own profile for now, or if we implement public badges) */}
-        {isOwnProfile && (
+        {/* PRIVATE ACCOUNT BLUR OVERLAY */}
+        {!isOwnProfile && !canViewProfile && (
+          <div className="relative">
+            <div className="absolute inset-0 flex flex-col items-center justify-center z-10 bg-black/40 backdrop-blur-sm rounded-xl">
+              <div className="text-center p-8">
+                <div className="text-6xl mb-4">🔒</div>
+                <h3 className="text-2xl font-bold mb-2">This Account is Private</h3>
+                <p className="opacity-70 mb-4">Follow this user to see their content</p>
+                {hasPendingRequest ? (
+                  <p className="text-yellow-400 font-semibold">Follow request sent</p>
+                ) : (
+                  <button
+                    onClick={handleFollowToggle}
+                    className="px-6 py-2 bg-blue-600 text-white rounded-full font-bold hover:bg-blue-700 transition-all"
+                  >
+                    Send Follow Request
+                  </button>
+                )}
+              </div>
+            </div>
+            
+            {/* Blurred placeholder content */}
+            <div className="filter blur-lg pointer-events-none opacity-50 min-h-[400px]">
+              <div className="grid grid-cols-5 gap-4 p-4">
+                {[1,2,3,4,5].map(i => (
+                  <div key={i} className="aspect-[2/3] bg-gray-600 rounded-lg"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* CONTENT - Only show if can view profile */}
+        {(isOwnProfile || canViewProfile) && (
+          <>
+        {/* BADGES */}
         <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4 text-center">Your Badges</h2>
+          <h2 className="text-xl font-semibold mb-4 text-center">
+            {isOwnProfile ? "Your Badges" : `${username}'s Badges`}
+          </h2>
           <div className="flex flex-wrap justify-center gap-6">
             {badges.map((badge) => (
               <div key={badge.id} className="flex flex-col items-center w-24 text-center">
@@ -337,7 +512,7 @@ const ProfilePage = () => {
             ))}
           </div>
 
-          {allUnlocked && (
+          {isOwnProfile && allUnlocked && (
             <div className="flex justify-center mt-8">
               {rewardCode ? (
                 <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg text-center">
@@ -358,7 +533,6 @@ const ProfilePage = () => {
             </div>
           )}
         </section>
-        )}
 
         {/* LAST COMMENTS */}
         <section className="mb-10">
@@ -460,6 +634,8 @@ const ProfilePage = () => {
             )}
           </ul>
         </div>
+      </>
+      )}
       </div>
 
       {isOwnProfile && (
@@ -470,6 +646,42 @@ const ProfilePage = () => {
           >
             Çıkış Yap
           </button>
+        </div>
+      )}
+
+      {/* FOLLOW REQUESTS MODAL */}
+      {showRequestsModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className={`${darkMode ? "bg-gray-800 text-white" : "bg-white text-black"} p-6 rounded-xl w-96 max-h-[80vh] overflow-y-auto shadow-2xl`}>
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold">Follow Requests</h2>
+              <button onClick={() => setShowRequestsModal(false)} className="text-2xl hover:text-red-500">&times;</button>
+            </div>
+            <ul className="space-y-3">
+              {followRequests.map((req) => (
+                <li key={req._id} className={`flex items-center justify-between p-3 rounded-lg ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
+                  <Link to={`/profile/${req.from._id}`} onClick={() => setShowRequestsModal(false)} className="font-semibold hover:text-blue-500">
+                    {req.from.username}
+                  </Link>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => handleAcceptRequest(req._id)}
+                      className="px-3 py-1 bg-green-500 text-white rounded-lg text-sm font-semibold hover:bg-green-600"
+                    >
+                      ✓
+                    </button>
+                    <button
+                      onClick={() => handleRejectRequest(req._id)}
+                      className="px-3 py-1 bg-red-500 text-white rounded-lg text-sm font-semibold hover:bg-red-600"
+                    >
+                      ✕
+                    </button>
+                  </div>
+                </li>
+              ))}
+              {followRequests.length === 0 && <p className="text-center opacity-70">No pending requests.</p>}
+            </ul>
+          </div>
         </div>
       )}
 

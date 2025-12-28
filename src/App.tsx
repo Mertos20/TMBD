@@ -16,6 +16,8 @@ import ProfileDetail from "./pages/ProfileDetail";
 import NotFound from "./pages/NotFound";
 import DuelPage from "./pages/DuelPage";
 import SocialPage from "./pages/SocialPage";
+import GuidePage from "./pages/GuidePage";
+import AdminPage from "./pages/AdminPage";
 
 import { ThemeProvider } from "./components/ThemaContext";
 
@@ -53,6 +55,8 @@ function App() {
             <Route path="/profile-detail" element={token ? <ProfileDetail /> : <Navigate to="/login" />} />
             <Route path="/duel" element={token ? <DuelPage /> : <Navigate to="/login" />} />
             <Route path="/social" element={token ? <SocialPage /> : <Navigate to="/login" />} />
+            <Route path="/guide" element={token ? <GuidePage /> : <Navigate to="/login" />} />
+            <Route path="/admin" element={token ? <AdminPage /> : <Navigate to="/login" />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </div>

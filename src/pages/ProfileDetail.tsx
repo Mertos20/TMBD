@@ -61,10 +61,19 @@ const ProfileDetail = () => {
         console.log("Favorites:", favorites);
         console.log("Watchlist:", watchlist);
 
-        const allItems = [
-          ...(Array.isArray(favorites) ? favorites : []),
-          ...(Array.isArray(watchlist) ? watchlist : []),
-        ];
+        const favArray = Array.isArray(favorites) ? favorites : [];
+        const watchArray = Array.isArray(watchlist) ? watchlist : [];
+
+        // Combine and deduplicate based on movieId
+        const uniqueItemsMap = new Map();
+        
+        [...favArray, ...watchArray].forEach(item => {
+            if (item.movieId && !uniqueItemsMap.has(item.movieId)) {
+                uniqueItemsMap.set(item.movieId, item);
+            }
+        });
+        
+        const allItems = Array.from(uniqueItemsMap.values());
         setTotalWatched(allItems.length);
 
         if (allItems.length === 0) {

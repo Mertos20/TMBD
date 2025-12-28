@@ -21,7 +21,7 @@ const verifyToken = (req, res, next) => {
   });
 };
 
-// POST /api/favorites → yeni favori ekle
+// POST /api/watchlists → yeni watchlist öğesi ekle
 router.post("/", verifyToken, async (req, res) => {
   const { movieId, title, poster_path, media_type } = req.body;
   if (!movieId || !title) return res.status(400).json({ error: "MovieId and title required" });
@@ -39,7 +39,7 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
-// DELETE /api/favorites/:movieId → favoriyi sil
+// DELETE /api/watchlists/:movieId → watchlist öğesini sil
 router.delete("/:movieId", verifyToken, async (req, res) => {
   try {
     const deleted = await WatchList.findOneAndDelete({ movieId: req.params.movieId, userId: req.user.id });
@@ -75,7 +75,7 @@ router.get("/user/:userId", verifyToken, async (req, res) => {
   }
 });
 
-// GET /api/favorites/:movieId → favori kontrol
+// GET /api/watchlists/:movieId → watchlist kontrol
 router.get("/:movieId", verifyToken, async (req, res) => {
   try {
     const watch = await WatchList.findOne({ movieId: req.params.movieId, userId: req.user.id });

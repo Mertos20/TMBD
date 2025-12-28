@@ -1,5 +1,6 @@
 import express from "express";
 import Comment from "../models/Comment.js";
+import User from "../models/User.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
@@ -26,16 +27,27 @@ router.post("/", verifyToken, async (req, res) => {
   if (!movieId || !comment) return res.status(400).json({ error: "MovieId and comment required" });
 
   try {
+    // Fetch user to get the correct username
+    const user = await User.findById(req.user.id);
+    const username = user ? user.username : "Unknown";
+
     const newComment = new Comment({
       movieId,
       userId: req.user.id,
-      username: req.user.email, // ya da username saklıyorsan username
+      username: username,
       comment,
       rating: rating || 0,
     });
 
     await newComment.save();
-    res.status(201).json(newComment);
+    
+    // Return populated comment so frontend can display it immediately with email if needed
+    const populatedComment = {
+        ...newComment._doc,
+        userEmail: user ? user.email : ""
+    };
+
+    res.status(201).json(populatedComment);
   } catch (err) {
     console.log(err);
     res.status(500).json({ error: "Server error" });
@@ -45,11 +57,20 @@ router.post("/", verifyToken, async (req, res) => {
 // 2️⃣ Movie bazlı yorumları listeleme
 router.get("/:movieId", async (req, res) => {
   try {
-    const comments = await Comment.find({ movieId: req.params.movieId }).sort({ createdAt: -1 });
-    const formattedComments = comments.map(c => ({
-      ...c._doc,
-      userId: c.userId.toString()
-    }));
+    const comments = await Comment.find({ movieId: req.params.movieId })
+      .populate("userId", "username email")
+      .sort({ createdAt: -1 });
+
+    const formattedComments = comments.map(c => {
+      // If user is deleted or not found, fallback to stored username
+      const userObj = c.userId;
+      return {
+        ...c._doc,
+        userId: userObj ? userObj._id.toString() : c.userId,
+        username: userObj ? userObj.username : c.username,
+        userEmail: userObj ? userObj.email : "",
+      };
+    });
     res.json(formattedComments);
   } catch (err) {
     console.log(err);
@@ -62,11 +83,19 @@ router.get("/user/:userId", verifyToken, async (req, res) => {
   try {
     const { userId } = req.params;
 
-    const comments = await Comment.find({ userId }).sort({ createdAt: -1 });
-    const formattedComments = comments.map(c => ({
-      ...c._doc,
-      userId: c.userId.toString()
-    }));
+    const comments = await Comment.find({ userId })
+      .populate("userId", "username email")
+      .sort({ createdAt: -1 });
+
+    const formattedComments = comments.map(c => {
+      const userObj = c.userId;
+      return {
+        ...c._doc,
+        userId: userObj ? userObj._id.toString() : c.userId,
+        username: userObj ? userObj.username : c.username,
+        userEmail: userObj ? userObj.email : "",
+      };
+    });
 
     res.json(formattedComments);
   } catch (err) {

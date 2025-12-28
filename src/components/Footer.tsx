@@ -2,87 +2,81 @@ import Logo from "../aspects/FooterLogo.svg";
 
 export default function Footer() {
   return (
-    <footer className="bg-[#032541] text-white flex justify-center h-auto md:h-[324.21px]">
-      <nav className="py-10 md:py-20 w-full max-w-[880.36px] flex flex-col md:flex-row md:items-start md:justify-start">
-       
-        <div className="flex flex-col items-center md:items-start mb-8 md:mb-0 md:mr-10">
-          <img
-            src={Logo}
-            alt="Logo"
-            className="w-[130px] h-[94px] mb-4 md:mb-0 md:relative md:left-[88.362px] md:bottom-[53.7px]"
-          />
-          <a
-            href="#"
-            className="bg-white text-[#01b4e4] border border-[#fff] py-2 px-4 font-bold font-sans text-[18.72px] rounded-[5px]"
-          >
-            JOIN THE COMMUNITY
-          </a>
-        </div>
+    <footer className="bg-[#032541] text-white py-12 mt-auto">
+      <div className="container mx-auto px-4">
+        <div className="flex flex-col lg:flex-row justify-between items-start gap-10">
+          
+          {/* Logo Section */}
+          <div className="flex flex-col items-center lg:items-start w-full lg:w-auto">
+            <img
+              src={Logo}
+              alt="TMDB Logo"
+              className="w-32 mb-6"
+            />
+            <p className="text-sm text-gray-400 text-center lg:text-left max-w-xs hidden lg:block">
+              The Movie Database (TMDB) is a popular, user-editable database for movies and TV shows.
+            </p>
+          </div>
 
-       
-        <div className="mb-8 md:mb-0 md:mr-10">
-          <h3 className="font-sans text-[20.16px] font-bold leading-[28.225px]">
-            THE BASICS
-          </h3>
-          <ul className="text-[14.4px] leading-[21.6px]">
-            {["About TMBD", "Contact Us", "Support Forums", "API Documentation", "System Status"].map((item) => (
-              <li key={item} className="leading-[23.04px]">
-                <a href="#" className="text-[1.2em] font-normal">
-                  {item}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+          {/* Links Container */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-8 w-full lg:w-auto flex-1 justify-end">
+            
+            {/* The Basics */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">The Basics</h3>
+              <ul className="space-y-2 text-sm">
+                {["About TMBD", "Contact Us", "Support Forums", "API", "System Status"].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="hover:text-[#01b4e4] transition-colors text-gray-300">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
-       
-        <div className="mb-8 md:mb-0 md:mr-10">
-          <h3 className="font-sans text-[20.16px] font-bold leading-[28.225px]">
-            GET INVOLVED
-          </h3>
-          <ul className="text-[14.4px] leading-[21.6px]">
-            {["Contribution Bible", "Add New Movie", "Add New TV Show"].map((item) => (
-              <li key={item} className="leading-[23.04px]">
-                <a href="#" className="text-[1.2em] font-normal">
-                  {item}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
+            {/* Get Involved */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">Get Involved</h3>
+              <ul className="space-y-2 text-sm">
+                {["Contribution Bible", "Add New Movie", "Add New TV Show"].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="hover:text-[#01b4e4] transition-colors text-gray-300">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
 
+            {/* Community */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">Community</h3>
+              <ul className="space-y-2 text-sm">
+                {["Guidelines", "Discussions", "Leaderboard"].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="hover:text-[#01b4e4] transition-colors text-gray-300">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Legal */}
+            <div>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">Legal</h3>
+              <ul className="space-y-2 text-sm">
+                {["Terms of Use", "Privacy Policy", "DMCA Policy"].map((item) => (
+                  <li key={item}>
+                    <a href="#" className="hover:text-[#01b4e4] transition-colors text-gray-300">{item}</a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        </div>
         
-        <div className="mb-8 md:mb-0 md:mr-10">
-          <h3 className="font-sans text-[20.16px] font-bold leading-[28.225px]">
-            COMMUNITY
-          </h3>
-          <ul className="text-[14.4px] leading-[21.6px]">
-            {["Guidelines", "Discussions", "Leaderboard"].map((item) => (
-              <li key={item} className="leading-[23.04px]">
-                <a href="#" className="text-[1.2em] font-normal">
-                  {item}
-                </a>
-              </li>
-            ))}
-          </ul>
+        {/* Copyright */}
+        <div className="mt-12 pt-8 border-t border-gray-700 text-center text-sm text-gray-400">
+          <p>&copy; {new Date().getFullYear()} The Movie Database. All rights reserved.</p>
         </div>
-
-       
-        <div className="mb-0">
-          <h3 className="font-sans text-[20.16px] font-bold leading-[28.225px]">
-            LEGAL
-          </h3>
-          <ul className="text-[14.4px] leading-[21.6px]">
-            {["Terms of Use", "API Terms of Use", "Privacy Policy", "DMCA Policy"].map((item) => (
-              <li key={item} className="leading-[23.04px]">
-                <a href="#" className="text-[1.2em] font-normal">
-                  {item}
-                </a>
-              </li>
-            ))}
-          </ul>
-        </div>
-      </nav>
+      </div>
     </footer>
   );
 }

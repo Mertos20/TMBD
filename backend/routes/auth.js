@@ -38,16 +38,24 @@ router.post("/login", async (req, res) => {
     const user = await User.findOne({ email });
     if (!user) return res.status(400).json({ error: "User not found" });
 
+    // Check if account is suspended
+    if (user.isSuspended) {
+      return res.status(403).json({ 
+        error: "Account suspended", 
+        reason: user.suspendedReason || "Your account has been suspended." 
+      });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) return res.status(400).json({ error: "Invalid password" });
 
     // JWT oluşturuluyor
     const token = jwt.sign(
-      { id: user._id, email: user.email },
+      { id: user._id, email: user.email, username: user.username, isAdmin: user.isAdmin },
       process.env.JWT_SECRET,
       { expiresIn: "7d" }
     );
-    res.json({ token, username: user.username, email: user.email, id: user._id });
+    res.json({ token, username: user.username, email: user.email, id: user._id, isAdmin: user.isAdmin });
   } catch (err) {
     console.error("Login Error:", err);
     res.status(500).json({ error: "Login failed" });
@@ -57,11 +65,48 @@ router.post("/login", async (req, res) => {
 // Get Public User Info
 router.get("/user/:id", async (req, res) => {
   try {
-    const user = await User.findById(req.params.id).select("username createdAt vibeCount following followers");
+    const user = await User.findById(req.params.id).select("username createdAt vibeCount following followers isPrivate");
     if (!user) return res.status(404).json({ error: "User not found" });
     res.json(user);
   } catch (err) {
     res.status(500).json({ error: "Failed to fetch user" });
+  }
+});
+
+// Toggle Private Account
+router.post("/toggle-private", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No token" });
+
+  const token = authHeader.split(" ")[1]?.trim();
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    user.isPrivate = !user.isPrivate;
+    await user.save();
+
+    res.json({ isPrivate: user.isPrivate });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to toggle privacy" });
+  }
+});
+
+// Get current user's privacy setting
+router.get("/privacy-status", async (req, res) => {
+  const authHeader = req.headers.authorization;
+  if (!authHeader) return res.status(401).json({ error: "No token" });
+
+  const token = authHeader.split(" ")[1]?.trim();
+  try {
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const user = await User.findById(decoded.id).select("isPrivate");
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    res.json({ isPrivate: user.isPrivate });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to get privacy status" });
   }
 });
 

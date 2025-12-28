@@ -7,7 +7,8 @@ const dailyTournamentSchema = new mongoose.Schema({
       id: Number,
       title: String,
       poster_path: String,
-      vote_average: Number
+      vote_average: Number,
+      overview: String
     }
   ]
 });

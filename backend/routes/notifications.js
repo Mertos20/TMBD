@@ -20,7 +20,7 @@ const verifyToken = (req, res, next) => {
 router.get("/", verifyToken, async (req, res) => {
   try {
     const notifications = await Notification.find({ recipient: req.user.id })
-      .populate("sender", "username")
+      .populate("sender", "_id username")
       .sort({ createdAt: -1 });
     res.json(notifications);
   } catch (err) {

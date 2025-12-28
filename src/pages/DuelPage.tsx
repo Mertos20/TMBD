@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../components/ThemaContext";
+import { DuelCard, DuelPodium, DuelCalendar } from "../components/duel";
 
 interface Movie {
   id: number;
   title: string;
   poster_path: string;
+  overview?: string;
 }
 
 interface PodiumMovie {
@@ -29,9 +31,13 @@ const DuelPage = () => {
   // Daily Stats
   const [podium, setPodium] = useState<PodiumMovie[]>([]);
 
+  // Calendar State
+  const [showCalendar, setShowCalendar] = useState(false);
+
   const IMAGE_BASE = "https://image.tmdb.org/t/p/w500";
   const userId = localStorage.getItem("userId");
-  const today = new Date().toISOString().split("T")[0];
+  // Use local date to match server's Turkey time logic (assuming user is in TR or similar)
+  const today = new Date().toLocaleDateString('en-CA');
   const storageKey = `duel_state_${userId}_${today}`;
 
   useEffect(() => {
@@ -55,11 +61,26 @@ const DuelPage = () => {
       const savedState = localStorage.getItem(storageKey);
       if (savedState) {
         const parsed = JSON.parse(savedState);
-        setCurrentRoundMatches(parsed.currentRoundMatches);
-        setNextRoundWinners(parsed.nextRoundWinners);
+
+        // Helper to enrich movies with fresh data (like overview)
+        const enrichMovie = (m: Movie) => {
+          const fresh = movies.find((fm: Movie) => fm.id === m.id);
+          return fresh ? { ...m, ...fresh } : m;
+        };
+
+        // Enrich current matches
+        const enrichedMatches = parsed.currentRoundMatches.map((pair: Movie[]) => 
+          pair.map(enrichMovie)
+        );
+
+        // Enrich next round winners
+        const enrichedWinners = parsed.nextRoundWinners.map(enrichMovie);
+
+        setCurrentRoundMatches(enrichedMatches);
+        setNextRoundWinners(enrichedWinners);
         setCurrentMatchIndex(parsed.currentMatchIndex);
         setRound(parsed.round);
-        setTournamentWinner(parsed.tournamentWinner);
+        setTournamentWinner(parsed.tournamentWinner ? enrichMovie(parsed.tournamentWinner) : null);
         setGameStatus(parsed.gameStatus);
       } else {
         setGameStatus("start");
@@ -192,78 +213,60 @@ const DuelPage = () => {
   };
 
   return (
-    <div className={`min-h-screen pt-20 pb-10 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}>
-      <div className="max-w-6xl mx-auto px-4 text-center">
+    <div className={`min-h-screen pt-20 pb-10 relative overflow-hidden ${darkMode ? "text-white" : "text-gray-900"}`}>
+      {/* Animated colorful blurred background - Teal/Turquoise/Aqua theme */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#032541] via-[#0d4f6e] to-[#01b4e4]"></div>
+        <div className="absolute top-0 left-1/4 w-[600px] h-[600px] bg-teal-400/30 rounded-full blur-[120px] animate-pulse"></div>
+        <div className="absolute bottom-0 right-1/4 w-[500px] h-[500px] bg-cyan-500/30 rounded-full blur-[100px] animate-pulse" style={{ animationDelay: "1s" }}></div>
+        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[700px] h-[700px] bg-emerald-500/20 rounded-full blur-[150px] animate-pulse" style={{ animationDelay: "0.5s" }}></div>
+        <div className="absolute top-1/4 right-1/3 w-[400px] h-[400px] bg-[#1ed5a9]/25 rounded-full blur-[80px] animate-pulse" style={{ animationDelay: "1.5s" }}></div>
+        <div className="absolute bottom-1/4 left-1/3 w-[350px] h-[350px] bg-sky-400/20 rounded-full blur-[90px] animate-pulse" style={{ animationDelay: "2s" }}></div>
+      </div>
+
+      <div className="max-w-6xl mx-auto px-4 text-center relative z-10">
         
-        <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-red-500 to-purple-600 bg-clip-text text-transparent">
-          Daily Movie Tournament
+        <h1 className="text-4xl md:text-5xl font-bold mb-2 bg-gradient-to-r from-[#1ed5a9] via-cyan-400 to-[#01b4e4] bg-clip-text text-transparent drop-shadow-lg">
+          ⚔️ Daily Movie Tournament ⚔️
         </h1>
-        <p className="opacity-70 mb-8">Vote for your favorites and crown the winner!</p>
+        <p className="opacity-80 mb-4 text-lg">Vote for your favorites and crown the winner!</p>
+
+        {/* Calendar Toggle Button - Only show when not playing */}
+        {gameStatus !== "playing" && (
+          <button
+            onClick={() => setShowCalendar(!showCalendar)}
+            className="mb-8 px-6 py-2 bg-white/10 backdrop-blur-sm border border-[#1ed5a9]/30 rounded-full text-sm font-semibold hover:bg-white/20 transition-all"
+          >
+            📅 {showCalendar ? "Hide Calendar" : "View Monthly Calendar"}
+          </button>
+        )}
+
+        {/* MONTHLY CALENDAR - Only show when not playing */}
+        {gameStatus !== "playing" && (
+          <DuelCalendar show={showCalendar} onClose={() => setShowCalendar(false)} />
+        )}
 
         {/* PODIUM SECTION */}
-        {podium.length > 0 && gameStatus !== "playing" && (
-          <div className="mb-24 flex justify-center items-end gap-4 md:gap-8 h-[300px]">
-            {/* 2nd Place */}
-            {podium[1] && (
-              <div className="flex flex-col items-center animate-fade-in-up delay-100">
-                <div className="relative w-24 md:w-32 rounded-lg overflow-hidden shadow-xl border-4 border-gray-400 mb-2 transform hover:scale-105 transition-transform">
-                  <img src={`${IMAGE_BASE}${podium[1].poster_path}`} className="w-full" />
-                  <div className="absolute top-0 left-0 bg-gray-400 text-white font-bold w-8 h-8 flex items-center justify-center rounded-br-lg">2</div>
-                </div>
-                <div className="h-24 w-24 md:w-32 bg-gray-400/20 rounded-t-lg flex flex-col items-center justify-center border-t-4 border-gray-400">
-                  <p className="font-bold text-sm md:text-base truncate w-full px-2">{podium[1].title}</p>
-                  <p className="text-xs opacity-70">{podium[1].points} pts</p>
-                </div>
-              </div>
-            )}
-
-            {/* 1st Place */}
-            {podium[0] && (
-              <div className="flex flex-col items-center z-10 animate-fade-in-up">
-                <div className="relative w-32 md:w-40 rounded-lg overflow-hidden shadow-2xl border-4 border-yellow-500 mb-2 transform hover:scale-110 transition-transform">
-                  <img src={`${IMAGE_BASE}${podium[0].poster_path}`} className="w-full" />
-                  <div className="absolute top-0 left-0 bg-yellow-500 text-white font-bold w-10 h-10 flex items-center justify-center rounded-br-lg text-xl">1</div>
-                  <div className="absolute -top-6 left-1/2 transform -translate-x-1/2 text-4xl">👑</div>
-                </div>
-                <div className="h-32 w-32 md:w-40 bg-yellow-500/20 rounded-t-lg flex flex-col items-center justify-center border-t-4 border-yellow-500">
-                  <p className="font-bold text-base md:text-lg truncate w-full px-2">{podium[0].title}</p>
-                  <p className="text-sm opacity-70">{podium[0].points} pts</p>
-                </div>
-              </div>
-            )}
-
-            {/* 3rd Place */}
-            {podium[2] && (
-              <div className="flex flex-col items-center animate-fade-in-up delay-200">
-                <div className="relative w-24 md:w-32 rounded-lg overflow-hidden shadow-xl border-4 border-orange-600 mb-2 transform hover:scale-105 transition-transform">
-                  <img src={`${IMAGE_BASE}${podium[2].poster_path}`} className="w-full" />
-                  <div className="absolute top-0 left-0 bg-orange-600 text-white font-bold w-8 h-8 flex items-center justify-center rounded-br-lg">3</div>
-                </div>
-                <div className="h-16 w-24 md:w-32 bg-orange-600/20 rounded-t-lg flex flex-col items-center justify-center border-t-4 border-orange-600">
-                  <p className="font-bold text-sm md:text-base truncate w-full px-2">{podium[2].title}</p>
-                  <p className="text-xs opacity-70">{podium[2].points} pts</p>
-                </div>
-              </div>
-            )}
-          </div>
+        {gameStatus !== "playing" && (
+          <DuelPodium podium={podium} />
         )}
 
         {gameStatus === "loading" && (
           <div className="h-[400px] flex items-center justify-center">
-            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-purple-500"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-[#1ed5a9] border-r-4 border-r-cyan-400"></div>
           </div>
         )}
 
         {gameStatus === "start" && (
-          <div className="py-20">
+          <div className="py-20 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl mx-4">
             <div className="text-6xl mb-6">⚔️</div>
-            <h2 className="text-2xl font-bold mb-4">Ready for today's challenge?</h2>
-            <p className="mb-8 opacity-70">32 Movies. 5 Rounds. 1 Winner.</p>
+            <h2 className="text-2xl font-bold mb-4 text-white">Ready for today's challenge?</h2>
+            <p className="mb-8 opacity-80 text-gray-200">32 Movies. 5 Rounds. 1 Winner.</p>
             <button 
               onClick={startTournament}
-              className="px-8 py-4 bg-purple-600 text-white font-bold rounded-full text-xl hover:bg-purple-700 hover:scale-105 transition-all shadow-lg shadow-purple-500/30"
+              className="px-8 py-4 bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] text-white font-bold rounded-full text-xl hover:from-teal-400 hover:to-cyan-500 hover:scale-105 transition-all shadow-lg shadow-teal-500/50 ring-2 ring-white/20"
             >
-              Start Tournament
+              🎮 Start Tournament
             </button>
           </div>
         )}
@@ -271,56 +274,28 @@ const DuelPage = () => {
         {gameStatus === "playing" && currentRoundMatches.length > 0 && (
           <div className="animate-fade-in">
             <div className="mb-8">
-              <span className="px-4 py-1 rounded-full bg-gray-700 text-white text-sm font-bold">
+              <span className="px-6 py-2 rounded-full bg-gradient-to-r from-[#032541] to-[#01b4e4] text-white text-sm font-bold shadow-lg border border-[#1ed5a9]/30">
                 {getRoundName(round, currentRoundMatches.length)}
               </span>
-              <p className="mt-2 opacity-50 text-sm">Match {currentMatchIndex + 1} of {currentRoundMatches.length}</p>
+              <p className="mt-2 opacity-70 text-sm text-gray-300">Match {currentMatchIndex + 1} of {currentRoundMatches.length}</p>
             </div>
 
             <div className="flex flex-col md:flex-row items-center justify-center gap-8 md:gap-20 mb-12">
               {/* MOVIE 1 */}
-              <div 
-                onClick={() => handleVote(currentRoundMatches[currentMatchIndex][0])}
-                className="group cursor-pointer transform transition hover:scale-105"
-              >
-                <div className="w-[200px] md:w-[280px] rounded-xl overflow-hidden shadow-2xl border-4 border-transparent hover:border-green-500 transition-all relative">
-                  <img 
-                    src={`${IMAGE_BASE}${currentRoundMatches[currentMatchIndex][0].poster_path}`} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
-                    <span className="opacity-0 group-hover:opacity-100 bg-green-500 text-white px-6 py-2 rounded-full font-bold transform translate-y-4 group-hover:translate-y-0 transition-all">
-                      Vote
-                    </span>
-                  </div>
-                </div>
-                <h3 className="mt-4 font-bold text-lg max-w-[200px] md:max-w-[280px] mx-auto">
-                  {currentRoundMatches[currentMatchIndex][0].title}
-                </h3>
-              </div>
+              <DuelCard 
+                movie={currentRoundMatches[currentMatchIndex][0]} 
+                onVote={() => handleVote(currentRoundMatches[currentMatchIndex][0])}
+                color="green"
+              />
 
-              <div className="text-2xl font-bold text-gray-500">VS</div>
+              <div className="text-3xl font-bold text-white/80 bg-white/10 backdrop-blur-sm w-16 h-16 rounded-full flex items-center justify-center shadow-lg">VS</div>
 
               {/* MOVIE 2 */}
-              <div 
-                onClick={() => handleVote(currentRoundMatches[currentMatchIndex][1])}
-                className="group cursor-pointer transform transition hover:scale-105"
-              >
-                <div className="w-[200px] md:w-[280px] rounded-xl overflow-hidden shadow-2xl border-4 border-transparent hover:border-blue-500 transition-all relative">
-                  <img 
-                    src={`${IMAGE_BASE}${currentRoundMatches[currentMatchIndex][1].poster_path}`} 
-                    className="w-full h-full object-cover"
-                  />
-                  <div className="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-20 transition-all flex items-center justify-center">
-                    <span className="opacity-0 group-hover:opacity-100 bg-blue-500 text-white px-6 py-2 rounded-full font-bold transform translate-y-4 group-hover:translate-y-0 transition-all">
-                      Vote
-                    </span>
-                  </div>
-                </div>
-                <h3 className="mt-4 font-bold text-lg max-w-[200px] md:max-w-[280px] mx-auto">
-                  {currentRoundMatches[currentMatchIndex][1].title}
-                </h3>
-              </div>
+              <DuelCard 
+                movie={currentRoundMatches[currentMatchIndex][1]} 
+                onVote={() => handleVote(currentRoundMatches[currentMatchIndex][1])}
+                color="blue"
+              />
             </div>
           </div>
         )}
@@ -328,16 +303,16 @@ const DuelPage = () => {
         {gameStatus === "finished" && tournamentWinner && (
           <div className="py-10 animate-bounce-in">
             <div className="text-6xl mb-4">👑</div>
-            <h2 className="text-3xl font-bold mb-6">Tournament Champion!</h2>
+            <h2 className="text-3xl font-bold mb-6 text-[#1ed5a9] drop-shadow-lg">Tournament Champion!</h2>
             
-            <div className="w-[240px] mx-auto rounded-xl overflow-hidden shadow-2xl border-4 border-yellow-500 mb-8">
+            <div className="w-[240px] mx-auto rounded-xl overflow-hidden shadow-2xl border-4 border-[#1ed5a9] mb-8 ring-4 ring-teal-400/50">
               <img src={`${IMAGE_BASE}${tournamentWinner.poster_path}`} className="w-full" />
             </div>
             
             <h3 className="text-2xl font-bold mb-8">{tournamentWinner.title}</h3>
             
-            <div className="text-gray-400">
-              Come back tomorrow for a new tournament!
+            <div className="text-gray-200 bg-[#032541]/50 backdrop-blur-sm px-6 py-3 rounded-full inline-block border border-[#1ed5a9]/30">
+              🎮 Come back tomorrow for a new tournament!
             </div>
           </div>
         )}

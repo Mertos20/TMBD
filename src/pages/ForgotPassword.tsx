@@ -23,6 +23,13 @@ const ForgotPassword = () => {
 
       if (res.ok) {
         setMessage("Check your email for the reset link.");
+        // Log reset link to browser console for development
+        if (data.link) {
+          console.log("--------------------------------------------------");
+          console.log("🔑 PASSWORD RESET LINK (Dev Mode):");
+          console.log(data.link);
+          console.log("--------------------------------------------------");
+        }
       } else {
         setError(data.error || "Something went wrong.");
       }

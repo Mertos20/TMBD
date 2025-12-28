@@ -20,8 +20,14 @@ const Login: React.FC = () => {
         localStorage.setItem("token", data.token);
         localStorage.setItem("username", data.username);
         localStorage.setItem("userId", data.id);
+        localStorage.setItem("isAdmin", data.isAdmin ? "true" : "false");
 
-       window.location.href="/"
+        // Admin goes to admin panel, regular users go to home
+        if (data.isAdmin) {
+          window.location.href = "/admin";
+        } else {
+          window.location.href = "/";
+        }
       } else {
         setError(data.error);
       }

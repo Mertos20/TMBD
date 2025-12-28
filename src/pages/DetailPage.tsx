@@ -44,6 +44,11 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
   const [hoverRating, setHoverRating] = useState(0);
   const [averageRating, setAverageRating] = useState("0");
   const [userRating, setUserRating] = useState(0);
+  
+  // Report states
+  const [showReportModal, setShowReportModal] = useState(false);
+  const [reportingComment, setReportingComment] = useState<any>(null);
+  const [reportLoading, setReportLoading] = useState(false);
 
   const userId = localStorage.getItem("userId");
 
@@ -131,7 +136,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
     async function fetchDetail() {
       if (!type || !id) return;
 
-      const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=en-US&append_to_response=videos,credits,keywords,external_ids,recommendations,reviews`;
+      const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=en-US&append_to_response=videos,credits,keywords,external_ids,recommendations,reviews,watch/providers`;
 
       const res = await fetch(url);
       const json = await res.json();
@@ -315,6 +320,43 @@ useEffect(() => {
 
     if (res.ok) setComments(comments.filter((c) => c._id !== commentId));
     else console.log("Error deleting comment");
+  };
+
+  // Report comment handler
+  const handleReportComment = async () => {
+    if (!reportingComment || !token) return;
+    
+    setReportLoading(true);
+    try {
+      const res = await fetch("http://localhost:5000/api/reports", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          commentId: reportingComment._id,
+          commentText: reportingComment.comment,
+          commentAuthorId: reportingComment.userId,
+          movieTitle: data?.title || data?.name,
+          movieId: id
+        })
+      });
+
+      const result = await res.json();
+      if (res.ok) {
+        alert("Report submitted successfully. Admin will review this comment.");
+      } else {
+        alert(result.error || "Failed to submit report");
+      }
+    } catch (err) {
+      console.error("Report error:", err);
+      alert("Failed to submit report");
+    } finally {
+      setReportLoading(false);
+      setShowReportModal(false);
+      setReportingComment(null);
+    }
   };
 
  
@@ -631,6 +673,31 @@ const createVibePlaylist = async (tokenParam?: string) => {
               )}
             </div>
 
+            {/* Where to Watch */}
+            {(() => {
+              const providers = data["watch/providers"]?.results?.TR || data["watch/providers"]?.results?.US;
+              if (providers?.flatrate) {
+                return (
+                  <div className="mt-4 p-3 bg-white/10 rounded-xl backdrop-blur-sm border border-white/20 inline-block">
+                    <h3 className="text-black font-bold mb-2 text-sm">Stream Now</h3>
+                    <div className="flex gap-3 flex-wrap">
+                      {providers.flatrate.map((provider: any) => (
+                        <div key={provider.provider_id} className="relative group">
+                          <img 
+                            src={`https://image.tmdb.org/t/p/original${provider.logo_path}`} 
+                            alt={provider.provider_name}
+                            title={provider.provider_name}
+                            className="w-10 h-10 rounded-lg shadow-md transition-transform transform group-hover:scale-110"
+                          />
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              }
+              return null;
+            })()}
+
             {isModalOpen && videoId && (
               <VideoModal videoId={videoId} onClose={() => setIsModalOpen(false)} />
             )}
@@ -736,18 +803,43 @@ const createVibePlaylist = async (tokenParam?: string) => {
                   return (
                     <div
                       key={c._id}
-                      className="p-4 border border-black/10 rounded-lg bg-white shadow-md"
+                      className={`p-4 border rounded-lg shadow-md ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-black/10"}`}
                     >
-                      <p className="font-semibold mb-1">{c.username}</p>
-                      <p className="text-black/80 mb-2">{c.comment}</p>
-                      {canDelete && (
-                        <button
-                          onClick={() => handleDeleteComment(c._id)}
-                          className="text-red-600 text-sm font-semibold hover:underline"
+                      <div className="flex items-baseline gap-2 mb-1">
+                        <Link 
+                          to={`/profile/${c.userId}`} 
+                          className={`font-semibold hover:underline ${darkMode ? "text-blue-400" : "text-blue-600"}`}
                         >
-                          Delete
-                        </button>
-                      )}
+                          {c.username}
+                        </Link>
+                        {c.userEmail && (
+                          <span className={`text-xs ${darkMode ? "text-gray-400" : "text-gray-500"}`}>
+                            {c.userEmail}
+                          </span>
+                        )}
+                      </div>
+                      <p className={`mb-2 ${darkMode ? "text-gray-300" : "text-black/80"}`}>{c.comment}</p>
+                      <div className="flex items-center gap-3">
+                        {canDelete && (
+                          <button
+                            onClick={() => handleDeleteComment(c._id)}
+                            className="text-red-600 text-sm font-semibold hover:underline"
+                          >
+                            Delete
+                          </button>
+                        )}
+                        {c.userId !== userId && (
+                          <button
+                            onClick={() => {
+                              setReportingComment(c);
+                              setShowReportModal(true);
+                            }}
+                            className={`text-sm font-semibold hover:underline ${darkMode ? "text-yellow-400" : "text-yellow-600"}`}
+                          >
+                            ⚠️ Report
+                          </button>
+                        )}
+                      </div>
                     </div>
                   );
                 })}
@@ -824,7 +916,45 @@ const createVibePlaylist = async (tokenParam?: string) => {
         </div>
       )}
 
-
+      {/* Report Confirmation Modal */}
+      {showReportModal && reportingComment && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className={`${darkMode ? "bg-gray-800" : "bg-white"} rounded-xl max-w-md w-full p-6 shadow-2xl`}>
+            <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
+              ⚠️ Report Comment
+            </h3>
+            
+            <div className={`p-4 rounded-lg mb-4 ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
+              <p className="text-sm opacity-70 mb-1">Comment by <strong>{reportingComment.username}</strong>:</p>
+              <p className={`italic ${darkMode ? "text-gray-300" : "text-gray-700"}`}>"{reportingComment.comment}"</p>
+            </div>
+            
+            <p className="mb-6">
+              Do you find this comment suspicious and want to report it to the admin for review?
+            </p>
+            
+            <div className="flex justify-end gap-3">
+              <button
+                onClick={() => {
+                  setShowReportModal(false);
+                  setReportingComment(null);
+                }}
+                className={`px-4 py-2 rounded-lg font-semibold ${darkMode ? "bg-gray-700 hover:bg-gray-600" : "bg-gray-200 hover:bg-gray-300"}`}
+                disabled={reportLoading}
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleReportComment}
+                disabled={reportLoading}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 disabled:opacity-50"
+              >
+                {reportLoading ? "Submitting..." : "Yes, Report"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
      
      
     </div>
