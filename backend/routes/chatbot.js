@@ -17,7 +17,7 @@ router.post("/", async (req, res) => {
     
     try {
       const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
       
       const prompt = `
         Analyze the sentiment of the user's input: "${message}".
@@ -38,6 +38,9 @@ router.post("/", async (req, res) => {
       parsedData = JSON.parse(rawText);
     } catch (err) {
       console.error("❌ Gemini API Error:", err);
+      if (err.message && (err.message.includes("403") || err.message.includes("API key"))) {
+        console.error("🚨 CRITICAL: Your Gemini API Key is invalid or reported as leaked. Please generate a new one and update your .env file.");
+      }
       return res.status(500).json({ error: "Gemini API failed" });
     }
 
@@ -85,7 +88,7 @@ router.post("/analyze-character", async (req, res) => {
     const { genres, totalWatched, username } = req.body;
 
     const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
     const prompt = `
       Analyze the movie watching character of a user named ${username}.

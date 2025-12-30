@@ -117,6 +117,9 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
   const [reportingComment, setReportingComment] = useState<any>(null);
   const [reportLoading, setReportLoading] = useState(false);
 
+  // Toast Notification State
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: "success" | "error" }>({ show: false, message: "", type: "success" });
+
   const userId = localStorage.getItem("userId");
   const isAdmin = localStorage.getItem("isAdmin") === "true";
 
@@ -206,6 +209,10 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=en-US&append_to_response=videos,credits,keywords,external_ids,recommendations,reviews,watch/providers`;
 
       const res = await fetch(url);
+      if (!res.ok) {
+        setLoading(false);
+        return;
+      }
       const json = await res.json();
       setData(json);
 
@@ -448,13 +455,16 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
       const result = await res.json();
       if (res.ok) {
-        alert("Report submitted successfully. Admin will review this comment.");
+        setToast({ show: true, message: "Report submitted successfully. Admin will review this comment.", type: "success" });
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
       } else {
-        alert(result.error || "Failed to submit report");
+        setToast({ show: true, message: result.error || "Failed to submit report", type: "error" });
+        setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
       }
     } catch (err) {
       console.error("Report error:", err);
-      alert("Failed to submit report");
+      setToast({ show: true, message: "Failed to submit report", type: "error" });
+      setTimeout(() => setToast(prev => ({ ...prev, show: false })), 4000);
     } finally {
       setReportLoading(false);
       setShowReportModal(false);
@@ -530,6 +540,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         },
       });
 
+      
       return res.status === 200; // ✔ Geçerli token
     } catch {
       return false;
@@ -630,6 +641,33 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
     <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-black" } w-full relative`}>
       {/* Loading Clapperboard Overlay */}
       {vibeLoading && <LoadingClapperboard />}
+
+      {/* Modern Toast Notification */}
+      <div className={`fixed top-24 right-5 z-[100] transition-all duration-500 transform ${toast.show ? "translate-x-0 opacity-100" : "translate-x-10 opacity-0 pointer-events-none"}`}>
+        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border min-w-[320px] ${
+          toast.type === "success" 
+            ? "bg-green-500/10 border-green-500/20 text-green-500" 
+            : "bg-red-500/10 border-red-500/20 text-red-500"
+        }`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
+            toast.type === "success" ? "bg-green-500/20" : "bg-red-500/20"
+          }`}>
+            {toast.type === "success" ? (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+              </svg>
+            ) : (
+              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+              </svg>
+            )}
+          </div>
+          <div>
+            <h4 className="font-bold text-lg">{toast.type === "success" ? "Success!" : "Error!"}</h4>
+            <p className={`text-sm font-medium ${darkMode ? "text-gray-300" : "text-gray-600"}`}>{toast.message}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Main Content - Blurred when loading */}
       <div className={`transition-all duration-700 ${vibeLoading ? 'blur-md brightness-[0.4] pointer-events-none' : ''}`}>
