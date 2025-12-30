@@ -71,12 +71,14 @@ const SearchBar = forwardRef<HTMLInputElement>((props, ref) => {
       </form>
 
       {suggestions.length > 0 && (
-        <ul className="absolute top-[100%] left-0 md:left-1/2 md:-translate-x-1/2 bg-white shadow-md w-full md:w-[1300px] max-h-[300px] overflow-y-auto z-50">
+        <ul
+          className={`absolute top-[100%] left-0 md:left-1/2 md:-translate-x-1/2 w-full md:w-[1300px] max-h-[300px] overflow-y-auto z-50 shadow-md bg-black text-white`}
+        >
           {suggestions.map((item) => (
             <li
               key={item.id}
               onClick={() => handleSuggestionClick(item.title)}
-              className="px-4 py-2 hover:bg-gray-100 cursor-pointer text-sm md:text-base"
+              className="px-4 py-2 hover:bg-gray-700/40 cursor-pointer text-sm md:text-base"
             >
               {item.title}
             </li>

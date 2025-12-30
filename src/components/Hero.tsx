@@ -4,6 +4,7 @@ import heroBg from "../aspects/Hero4.png";
 
 type HeroProps = {
   onSearch?: (q: string) => void;
+  
 };
 
 export default function Hero({ onSearch }: HeroProps) {
@@ -15,10 +16,7 @@ export default function Hero({ onSearch }: HeroProps) {
     const trimmed = q.trim();
     if (!trimmed) return;
 
-    
     onSearch?.(trimmed);
-
-    
     navigate(`/search?query=${encodeURIComponent(trimmed)}`);
   };
 
@@ -35,10 +33,13 @@ export default function Hero({ onSearch }: HeroProps) {
 
       {/* Content */}
       <div className="relative z-10 mx-auto max-w-[1300px] w-full px-4 pt-6 pb-6 h-auto md:h-[240px]">
+        
+        {/* TEXT AREA */}
         <div className="mb-4 w-full max-w-[1220px]">
-          <p className="text-white font-bold tracking-[-0.02em] text-3xl sm:text-4xl md:text-[48px] m-0 leading-tight">
+          <p className="text-white font-bold tracking-[-0.02em] text-3xl sm:text-4xl md:text-[48px] m-0 leading-tight flex items-center gap-3">
             Welcome.
           </p>
+
           <p className="text-white font-semibold text-base sm:text-xl md:text-[30px] m-0 leading-tight">
             Millions of movies, TV shows and people to discover. Explore now.
           </p>
@@ -48,7 +49,7 @@ export default function Hero({ onSearch }: HeroProps) {
         <div className="pt-6 w-full max-w-[1220px]">
           <form
             onSubmit={handleSubmit}
-            className="mt-6 flex flex-col sm:flex-row gap-2 h-auto sm:h-[48px] w-full items-center overflow-hidden rounded-full bg-white pl-4  sm:pl-6 shadow-[0_6px_16px_rgba(3,37,65,0.2)]"
+            className="mt-6 flex flex-col sm:flex-row gap-2 h-auto sm:h-[48px] w-full items-center overflow-hidden rounded-full bg-white pl-4 sm:pl-6 shadow-[0_6px_16px_rgba(3,37,65,0.2)]"
           >
             <input
               aria-label="search"
@@ -57,6 +58,7 @@ export default function Hero({ onSearch }: HeroProps) {
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
+
             <button
               type="submit"
               className="h-[48px] px-6 rounded-full bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#01b4e4]/50 w-full sm:w-auto"
