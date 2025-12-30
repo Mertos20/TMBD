@@ -13,8 +13,36 @@ import { useTheme } from "../components/ThemaContext";
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 const IMAGE_BASE = "https://image.tmdb.org/t/p";
 
+const MOVIE_QUOTES = [
+  { text: "I'm going to make him an offer he can't refuse.", movie: "The Godfather" },
+  { text: "May the Force be with you.", movie: "Star Wars" },
+  { text: "Here's looking at you, kid.", movie: "Casablanca" },
+  { text: "You talking to me?", movie: "Taxi Driver" },
+  { text: "I see dead people.", movie: "The Sixth Sense" },
+  { text: "Why so serious?", movie: "The Dark Knight" },
+  { text: "I'll be back.", movie: "The Terminator" },
+  { text: "Houston, we have a problem.", movie: "Apollo 13" },
+  { text: "To infinity and beyond!", movie: "Toy Story" },
+  { text: "Just keep swimming.", movie: "Finding Nemo" },
+  { text: "Winter is coming.", movie: "Game of Thrones" },
+  { text: "My precious.", movie: "The Lord of the Rings" },
+  { text: "I am your father.", movie: "Star Wars: Empire Strikes Back" },
+  { text: "Life is like a box of chocolates.", movie: "Forrest Gump" },
+];
+
 // --- YENİ EKLENEN LOADING CLAPPERBOARD BİLEŞENİ ---
 const LoadingClapperboard = () => {
+  const [quoteIndex, setQuoteIndex] = useState(0);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setQuoteIndex((prev) => (prev + 1) % MOVIE_QUOTES.length);
+    }, 3500);
+    return () => clearInterval(interval);
+  }, []);
+
+  const quote = MOVIE_QUOTES[quoteIndex];
+
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md transition-colors duration-700">
       <div className="relative w-80 select-none">
@@ -32,7 +60,7 @@ const LoadingClapperboard = () => {
         </div>
 
         {/* Alt Parça (Board) */}
-        <div className="h-64 bg-[#1a1a1a] rounded-b-xl shadow-2xl flex flex-col relative overflow-hidden border-t-4 border-white">
+        <div className="h-80 bg-[#1a1a1a] rounded-b-xl shadow-2xl flex flex-col relative overflow-hidden border-t-4 border-white">
            {/* Alt parçanın üst şeridi */}
            <div className="h-4 w-full absolute top-0 left-0" 
                 style={{ backgroundImage: "repeating-linear-gradient(135deg, transparent, transparent 20px, white 20px, white 40px)" }} 
@@ -60,11 +88,16 @@ const LoadingClapperboard = () => {
                </div>
 
                {/* Aksiyon Yazısı */}
-               <div className="text-center mt-2">
-                   <h2 className="text-3xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+               <div className="text-center mt-4 flex flex-col items-center justify-center flex-1">
+                   <h2 className="text-3xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] mb-2">
                        LOADING
                    </h2>
-                   <p className="text-xs text-[#1DB954] font-mono mt-1 animate-pulse">Connecting to Spotify...</p>
+                   
+                   <div key={quoteIndex} className="flex flex-col items-center justify-center animate-fade-in px-2">
+                     <p className="text-xs text-[#1DB954] font-mono animate-pulse mb-3">Connecting to Spotify...</p>
+                     <p className="text-sm text-white/90 italic font-serif text-center leading-tight">"{quote.text}"</p>
+                     <p className="text-[10px] text-white/50 uppercase mt-1">- {quote.movie}</p>
+                   </div>
                </div>
            </div>
            
@@ -81,6 +114,13 @@ const LoadingClapperboard = () => {
         }
         .animate-clap-loop {
           animation: clap-loop 0.8s ease-in-out infinite;
+        }
+        @keyframes fade-in {
+          from { opacity: 0; transform: translateY(5px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+          animation: fade-in 0.5s ease-out forwards;
         }
       `}</style>
     </div>
