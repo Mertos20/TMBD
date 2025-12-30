@@ -27,7 +27,7 @@ const MOVIE_QUOTES = [
   { text: "Winter is coming.", movie: "Game of Thrones" },
   { text: "My precious.", movie: "The Lord of the Rings" },
   { text: "I am your father.", movie: "Star Wars: Empire Strikes Back" },
-  { text: "Life is like a box of chocolates.", movie: "Forrest Gumps" },
+  { text: "Life is like a box of chocolates.", movie: "Forrest Gump" },
 ];
 
 // --- YENİ EKLENEN LOADING CLAPPERBOARD BİLEŞENİ ---
