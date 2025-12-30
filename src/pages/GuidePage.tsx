@@ -42,7 +42,7 @@ const GuidePage = () => {
     <div className={`min-h-screen pt-24 pb-10 ${darkMode ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-900"}`}>
       <div className="max-w-6xl mx-auto px-6">
         <h1 className="text-4xl md:text-5xl font-bold text-center mb-4 bg-gradient-to-r from-blue-500 to-purple-600 bg-clip-text text-transparent">
-          Welcome to TBMD Guide
+          Welcome to Movibase Guide
         </h1>
         <p className="text-center text-lg opacity-70 mb-16 max-w-2xl mx-auto">
           Discover everything you can do on our platform. From AI-powered features to social interactions, here is how to make the most of your experience.

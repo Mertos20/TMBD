@@ -80,7 +80,7 @@ router.post("/claim", verifyToken, async (req, res) => {
       // Generate unique code
       const randomPart = Math.random().toString(36).substring(2, 8).toUpperCase();
       const year = new Date().getFullYear();
-      const code = `TMDB-${year}-${randomPart}`;
+      const code = `MVB-${year}-${randomPart}`;
 
       user.rewardCode = code;
       await user.save();

@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import Logo from "../aspects/Logo2.png";
 import { useNavigate } from "react-router-dom";
 import { FaMoon, FaRegMoon, FaBell } from "react-icons/fa";
 import { useTheme } from "./ThemaContext";
@@ -77,8 +76,16 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
           
           {/* Logo + Desktop Menu */}
           <div className="flex items-center h-[56px]">
-            <a href="/">
-              <img className="h-[20px] w-[154px] mr-4" src={Logo} alt="TMDB Logo" />
+            <a href="/" className="flex items-center gap-2 mr-4">
+              <div className="flex items-center">
+                <span className="text-2xl font-black bg-gradient-to-r from-[#01b4e4] to-[#90cea1] bg-clip-text text-transparent">
+                  Movi
+                </span>
+                <span className="text-2xl font-black text-white">base</span>
+                <span className="ml-2 text-xs font-bold bg-[#01b4e4] text-[#032541] px-1.5 py-0.5 rounded">
+                  MVB
+                </span>
+              </div>
             </a>
 
             {/* Desktop Menu */}
@@ -245,7 +252,7 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
             ) : (
               <>
                 <a href="/login" className="font-semibold hover:text-[#01b4e4]">Login</a>
-                <a href="/signup" className="font-semibold hover:text-[#01b4e4]">Join TMDB</a>
+                <a href="/signup" className="font-semibold hover:text-[#01b4e4]">Join Movibase</a>
               </>
             )}
 
