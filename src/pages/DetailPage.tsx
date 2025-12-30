@@ -13,6 +13,7 @@ import { useTheme } from "../components/ThemaContext";
 const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
 const IMAGE_BASE = "https://image.tmdb.org/t/p";
 
+<<<<<<< HEAD
 const MOVIE_QUOTES = [
   { text: "I'm going to make him an offer he can't refuse.", movie: "The Godfather" },
   { text: "May the Force be with you.", movie: "Star Wars" },
@@ -61,6 +62,28 @@ const LoadingClapperboard = () => {
 
         {/* Alt Parça (Board) */}
         <div className="h-80 bg-[#1a1a1a] rounded-b-xl shadow-2xl flex flex-col relative overflow-hidden border-t-4 border-white">
+=======
+// --- YENİ EKLENEN LOADING CLAPPERBOARD BİLEŞENİ ---
+const LoadingClapperboard = () => {
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md transition-colors duration-700">
+      <div className="relative w-80 select-none">
+        
+        {/* Üst Parça (Clapper Stick) - Sürekli Çakan Animasyon */}
+        <div 
+          className="h-16 bg-[#1a1a1a] rounded-t-xl origin-bottom-left relative z-20 animate-clap-loop"
+          style={{ 
+            backgroundImage: "repeating-linear-gradient(135deg, transparent, transparent 20px, white 20px, white 40px)",
+            boxShadow: "0 4px 6px rgba(0,0,0,0.5)"
+          }}
+        >
+            {/* Menteşe Detayı */}
+            <div className="absolute bottom-2 left-2 w-4 h-4 rounded-full bg-neutral-400 border-2 border-neutral-600 shadow-inner z-30" />
+        </div>
+
+        {/* Alt Parça (Board) */}
+        <div className="h-64 bg-[#1a1a1a] rounded-b-xl shadow-2xl flex flex-col relative overflow-hidden border-t-4 border-white">
+>>>>>>> 3d6ba5e5f70014722a215f0d95ebe74f1dc3a4f2
            {/* Alt parçanın üst şeridi */}
            <div className="h-4 w-full absolute top-0 left-0" 
                 style={{ backgroundImage: "repeating-linear-gradient(135deg, transparent, transparent 20px, white 20px, white 40px)" }} 
@@ -88,6 +111,7 @@ const LoadingClapperboard = () => {
                </div>
 
                {/* Aksiyon Yazısı */}
+<<<<<<< HEAD
                <div className="text-center mt-4 flex flex-col items-center justify-center flex-1">
                    <h2 className="text-3xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] mb-2">
                        LOADING
@@ -98,6 +122,13 @@ const LoadingClapperboard = () => {
                      <p className="text-sm text-white/90 italic font-serif text-center leading-tight">"{quote.text}"</p>
                      <p className="text-[10px] text-white/50 uppercase mt-1">- {quote.movie}</p>
                    </div>
+=======
+               <div className="text-center mt-2">
+                   <h2 className="text-3xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)]">
+                       LOADING
+                   </h2>
+                   <p className="text-xs text-[#1DB954] font-mono mt-1 animate-pulse">Connecting to Spotify...</p>
+>>>>>>> 3d6ba5e5f70014722a215f0d95ebe74f1dc3a4f2
                </div>
            </div>
            
@@ -115,6 +146,7 @@ const LoadingClapperboard = () => {
         .animate-clap-loop {
           animation: clap-loop 0.8s ease-in-out infinite;
         }
+<<<<<<< HEAD
         @keyframes fade-in {
           from { opacity: 0; transform: translateY(5px); }
           to { opacity: 1; transform: translateY(0); }
@@ -122,6 +154,8 @@ const LoadingClapperboard = () => {
         .animate-fade-in {
           animation: fade-in 0.5s ease-out forwards;
         }
+=======
+>>>>>>> 3d6ba5e5f70014722a215f0d95ebe74f1dc3a4f2
       `}</style>
     </div>
   );
@@ -580,7 +614,10 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         },
       });
 
+<<<<<<< HEAD
       
+=======
+>>>>>>> 3d6ba5e5f70014722a215f0d95ebe74f1dc3a4f2
       return res.status === 200; // ✔ Geçerli token
     } catch {
       return false;
@@ -682,6 +719,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       {/* Loading Clapperboard Overlay */}
       {vibeLoading && <LoadingClapperboard />}
 
+<<<<<<< HEAD
       {/* Modern Toast Notification */}
       <div className={`fixed top-24 right-5 z-[100] transition-all duration-500 transform ${toast.show ? "translate-x-0 opacity-100" : "translate-x-10 opacity-0 pointer-events-none"}`}>
         <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border min-w-[320px] ${
@@ -709,6 +747,8 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         </div>
       </div>
 
+=======
+>>>>>>> 3d6ba5e5f70014722a215f0d95ebe74f1dc3a4f2
       {/* Main Content - Blurred when loading */}
       <div className={`transition-all duration-700 ${vibeLoading ? 'blur-md brightness-[0.4] pointer-events-none' : ''}`}>
         <div className="relative w-full h-auto md:h-[570px] border-b border-black/10">
