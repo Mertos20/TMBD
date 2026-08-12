@@ -1,8 +1,11 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { useTheme } from "../components/ThemaContext";
+import BadgeSection from "../components/profile/BadgeSection";
+import { FaChartBar } from "react-icons/fa";
+import { API_URL } from "../config/api";
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w200";
 
 interface Comment {
@@ -111,13 +114,13 @@ const ProfilePage = () => {
       
       try {
         // 1. Kullanıcı Bilgisi
-        const userRes = await fetch(`http://localhost:5000/api/auth/user/${targetUserId}`);
+        const userRes = await fetch(`${API_URL}/api/auth/user/${targetUserId}`);
         const userData = await userRes.json();
 
         if (isOwnProfile) {
           setUsername(localStorage.getItem("username") || "");
           // Fetch my privacy setting
-          const privacyRes = await fetch("http://localhost:5000/api/auth/privacy-status", {
+          const privacyRes = await fetch(`${API_URL}/api/auth/privacy-status`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (privacyRes.ok) {
@@ -125,7 +128,7 @@ const ProfilePage = () => {
             setMyPrivacySetting(privacyData.isPrivate);
           }
           // Fetch follow requests
-          const requestsRes = await fetch("http://localhost:5000/api/friends/requests", {
+          const requestsRes = await fetch(`${API_URL}/api/friends/requests`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           if (requestsRes.ok) {
@@ -143,7 +146,7 @@ const ProfilePage = () => {
           if (userData.isPrivate && !amIFollowing) {
             setCanViewProfile(false);
             // Check pending request status
-            const reqStatusRes = await fetch(`http://localhost:5000/api/friends/request-status/${targetUserId}`, {
+            const reqStatusRes = await fetch(`${API_URL}/api/friends/request-status/${targetUserId}`, {
               headers: { Authorization: `Bearer ${token}` }
             });
             if (reqStatusRes.ok) {
@@ -166,7 +169,7 @@ const ProfilePage = () => {
 
         // Yorumlar
         const commentsRes = await fetch(
-          `http://localhost:5000/api/comments/user/${targetUserId}`,
+          `${API_URL}/api/comments/user/${targetUserId}`,
           { headers: { Authorization: `Bearer ${token}` } }
         );
         const rawComments: Comment[] = await commentsRes.json();
@@ -200,7 +203,7 @@ const ProfilePage = () => {
         setComments(enriched);
 
         // Ratings
-        const ratingsRes = await fetch(`http://localhost:5000/api/ratings/user/${targetUserId}`, {
+        const ratingsRes = await fetch(`${API_URL}/api/ratings/user/${targetUserId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (ratingsRes.ok) {
@@ -208,19 +211,19 @@ const ProfilePage = () => {
         }
 
         // Favoriler (targetUserId parametresi ile)
-        const favRes = await fetch(`http://localhost:5000/api/favorites/user/${targetUserId}`, {
+        const favRes = await fetch(`${API_URL}/api/favorites/user/${targetUserId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setFavorites(await favRes.json());
 
         // Watchlist (targetUserId parametresi ile)
-        const watchRes = await fetch(`http://localhost:5000/api/watchlists/user/${targetUserId}`, {
+        const watchRes = await fetch(`${API_URL}/api/watchlists/user/${targetUserId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         setWatchlist(await watchRes.json());
 
         // Badges (Artık herkesin badge'lerini görebiliriz)
-        const badgeRes = await fetch(`http://localhost:5000/api/gamification/progress?userId=${targetUserId}`, {
+        const badgeRes = await fetch(`${API_URL}/api/gamification/progress?userId=${targetUserId}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
         if (badgeRes.ok) {
@@ -247,7 +250,7 @@ const ProfilePage = () => {
 
   const handleOpenModal = async (type: "followers" | "following") => {
     try {
-      const res = await fetch(`http://localhost:5000/api/friends/${type}/${targetUserId}`, {
+      const res = await fetch(`${API_URL}/api/friends/${type}/${targetUserId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data = await res.json();
@@ -267,7 +270,7 @@ const ProfilePage = () => {
     if (isFollowing) {
       // Unfollow
       try {
-        await fetch(`http://localhost:5000/api/friends/unfollow/${targetUserId}`, {
+        await fetch(`${API_URL}/api/friends/unfollow/${targetUserId}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -282,7 +285,7 @@ const ProfilePage = () => {
     } else {
       // Follow or send request
       try {
-        const res = await fetch(`http://localhost:5000/api/friends/follow/${targetUserId}`, {
+        const res = await fetch(`${API_URL}/api/friends/follow/${targetUserId}`, {
           method: "POST",
           headers: { Authorization: `Bearer ${token}` },
         });
@@ -304,7 +307,7 @@ const ProfilePage = () => {
 
   const handleTogglePrivacy = async () => {
     try {
-      const res = await fetch("http://localhost:5000/api/auth/toggle-private", {
+      const res = await fetch(`${API_URL}/api/auth/toggle-private`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -319,7 +322,7 @@ const ProfilePage = () => {
 
   const handleAcceptRequest = async (requestId: string) => {
     try {
-      await fetch(`http://localhost:5000/api/friends/requests/${requestId}/accept`, {
+      await fetch(`${API_URL}/api/friends/requests/${requestId}/accept`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -332,7 +335,7 @@ const ProfilePage = () => {
 
   const handleRejectRequest = async (requestId: string) => {
     try {
-      await fetch(`http://localhost:5000/api/friends/requests/${requestId}/reject`, {
+      await fetch(`${API_URL}/api/friends/requests/${requestId}/reject`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -344,7 +347,7 @@ const ProfilePage = () => {
 
   const handleClaimReward = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/gamification/claim`, {
+      const res = await fetch(`${API_URL}/api/gamification/claim`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -391,10 +394,11 @@ const ProfilePage = () => {
               <>
                 <button
                   onClick={() => navigate("/profile-detail")}
-                  className="w-10 h-10 flex items-center justify-center bg-purple-600 text-white rounded-lg shadow-md hover:bg-purple-700 transition-colors"
-                  title="View Statistics"
+                  className="group relative w-10 h-10 flex items-center justify-center bg-gradient-to-br from-purple-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-purple-500/40 hover:scale-110 transition-all duration-300"
+                  title="Detaylı İstatistikler"
                 >
-                  📊
+                  <div className="absolute inset-0 rounded-xl bg-white/20 opacity-0 group-hover:opacity-100 transition-opacity" />
+                  <FaChartBar className="text-lg drop-shadow-md" />
                 </button>
                 <button
                   onClick={handleTogglePrivacy}
@@ -484,55 +488,14 @@ const ProfilePage = () => {
         {(isOwnProfile || canViewProfile) && (
           <>
         {/* BADGES */}
-        <section className="mb-10">
-          <h2 className="text-xl font-semibold mb-4 text-center">
-            {isOwnProfile ? "Your Badges" : `${username}'s Badges`}
-          </h2>
-          <div className="flex flex-wrap justify-center gap-6">
-            {badges.map((badge) => (
-              <div key={badge.id} className="flex flex-col items-center w-24 text-center">
-                <div 
-                  className={`w-16 h-16 rounded-full flex items-center justify-center text-2xl mb-2 border-4 transition-all duration-500 ${
-                    badge.unlocked 
-                      ? "bg-gradient-to-br from-yellow-400 to-orange-500 border-yellow-300 shadow-lg scale-110" 
-                      : "bg-gray-300 border-gray-400 grayscale opacity-50"
-                  }`}
-                >
-                  {badge.id === 1 && "⭐"}
-                  {badge.id === 2 && "💬"}
-                  {badge.id === 3 && "❤️"}
-                  {badge.id === 4 && "📅"}
-                  {badge.id === 5 && "🎵"}
-                </div>
-                <h3 className={`font-bold text-sm ${badge.unlocked ? "text-yellow-600" : "text-gray-500"}`}>
-                  {badge.name}
-                </h3>
-                <p className="text-xs opacity-70">{badge.current}/{badge.target}</p>
-              </div>
-            ))}
-          </div>
-
-          {isOwnProfile && allUnlocked && (
-            <div className="flex justify-center mt-8">
-              {rewardCode ? (
-                <div className="bg-green-100 border border-green-400 text-green-700 px-6 py-4 rounded-lg text-center">
-                  <p className="font-bold text-lg mb-2">🎉 Congratulations! 🎉</p>
-                  <p className="mb-2">You won a double cinema ticket valid at all Paribu Cineverse theaters!</p>
-                  <p className="font-mono text-2xl bg-white px-4 py-2 rounded border border-green-200 inline-block">
-                    {rewardCode}
-                  </p>
-                </div>
-              ) : (
-                <button
-                  onClick={handleClaimReward}
-                  className="bg-gradient-to-r from-purple-600 to-blue-600 text-white font-bold py-3 px-8 rounded-full shadow-lg hover:scale-105 transition-transform animate-bounce"
-                >
-                  🎁 View Reward Code
-                </button>
-              )}
-            </div>
-          )}
-        </section>
+        <BadgeSection 
+          badges={badges}
+          isOwnProfile={isOwnProfile}
+          username={username}
+          allUnlocked={allUnlocked}
+          rewardCode={rewardCode}
+          onClaimReward={handleClaimReward}
+        />
 
         {/* LAST COMMENTS */}
         <section className="mb-10">

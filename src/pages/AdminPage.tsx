@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useTheme } from "../components/ThemaContext";
+import { API_URL } from "../config/api";
 import {
   BarChart,
   Bar,
@@ -107,28 +108,28 @@ const AdminPage = () => {
     setLoading(true);
     try {
       if (activeTab === "dashboard") {
-        const res = await fetch("http://localhost:5000/api/admin/stats", {
+        const res = await fetch(`${API_URL}/api/admin/stats`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
           setStats(await res.json());
         }
       } else if (activeTab === "users") {
-        const res = await fetch("http://localhost:5000/api/admin/users", {
+        const res = await fetch(`${API_URL}/api/admin/users`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
           setUsers(await res.json());
         }
       } else if (activeTab === "activities") {
-        const res = await fetch("http://localhost:5000/api/admin/activities", {
+        const res = await fetch(`${API_URL}/api/admin/activities`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
           setActivities(await res.json());
         }
       } else if (activeTab === "reports") {
-        const res = await fetch("http://localhost:5000/api/reports", {
+        const res = await fetch(`${API_URL}/api/reports`, {
           headers: { Authorization: `Bearer ${token}` }
         });
         if (res.ok) {
@@ -148,7 +149,7 @@ const AdminPage = () => {
 
   const handleSuspend = async (userId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}/suspend`, {
+      const res = await fetch(`${API_URL}/api/admin/users/${userId}/suspend`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${token}`,
@@ -170,7 +171,7 @@ const AdminPage = () => {
 
   const handleUnsuspend = async (userId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}/unsuspend`, {
+      const res = await fetch(`${API_URL}/api/admin/users/${userId}/unsuspend`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -186,7 +187,7 @@ const AdminPage = () => {
 
   const fetchUserDetails = async (userId: string) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/admin/users/${userId}`, {
+      const res = await fetch(`${API_URL}/api/admin/users/${userId}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -204,7 +205,7 @@ const AdminPage = () => {
 
   const handleReportAction = async (reportId: string, status: string, deleteComment: boolean = false) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/reports/${reportId}`, {
+      const res = await fetch(`${API_URL}/api/reports/${reportId}`, {
         method: "PUT",
         headers: {
           Authorization: `Bearer ${token}`,

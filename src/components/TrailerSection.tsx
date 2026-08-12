@@ -2,7 +2,7 @@ import React, { useEffect, useState, useRef } from "react";
 import TrailerCard from "./TrailerCard";
 import VideoModal from "./VideoModal";
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 interface Item {
   id: number;

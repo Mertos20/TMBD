@@ -5,7 +5,7 @@ import WatchList from "../models/WatchList.js";
 import jwt from "jsonwebtoken";
 
 const router = express.Router();
-const TMDB_API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const TMDB_API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 const verifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;

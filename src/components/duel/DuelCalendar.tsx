@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { API_URL } from "../../config/api";
 
 interface DailyWinner {
   date: string;
@@ -31,7 +32,7 @@ const DuelCalendar = ({ show, onClose }: DuelCalendarProps) => {
 
   const fetchMonthlyCalendar = async () => {
     try {
-      const res = await fetch(`http://localhost:5000/api/duel/monthly-calendar/${calendarYear}/${calendarMonth + 1}`);
+      const res = await fetch(`${API_URL}/api/duel/monthly-calendar/${calendarYear}/${calendarMonth + 1}`);
       const data = await res.json();
       setMonthlyWinners(data);
     } catch (err) {

@@ -8,6 +8,19 @@ import User from "../models/User.js";
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Email transporter setup
+const createTransporter = () => {
+  return nodemailer.createTransport({
+    host: process.env.EMAIL_HOST || "smtp.gmail.com",
+    port: parseInt(process.env.EMAIL_PORT) || 587,
+    secure: false, // true for 465, false for other ports
+    auth: {
+      user: process.env.EMAIL_USER,
+      pass: process.env.EMAIL_PASS,
+    },
+  });
+};
+
 // Register
 router.post("/register", async (req, res) => {
   try {
@@ -122,18 +135,71 @@ router.post("/forgot-password", async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const resetUrl = `http://localhost:5173/reset-password/${token}`;
+    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const resetUrl = `${frontendUrl}/reset-password/${token}`;
 
-    // LOCAL DEV MODE: Log link to console instead of sending email
-    console.log("--------------------------------------------------");
-    console.log("🔑 PASSWORD RESET LINK (Local Dev Mode):");
-    console.log(resetUrl);
-    console.log("--------------------------------------------------");
+    // Check if email credentials are configured
+    if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
+      // Send real email
+      const transporter = createTransporter();
+      
+      const mailOptions = {
+        from: process.env.EMAIL_FROM || process.env.EMAIL_USER,
+        to: user.email,
+        subject: "🔑 Movibase - Password Reset Request",
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
+            <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
+              <h1 style="color: white; margin: 0; text-align: center;">🎬 TBMD</h1>
+              <p style="color: rgba(255,255,255,0.9); text-align: center; margin-top: 10px;">Password Reset Request</p>
+            </div>
+            <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
+              <p style="color: #333; font-size: 16px;">Hello <strong>${user.username}</strong>,</p>
+              <p style="color: #666; font-size: 14px; line-height: 1.6;">
+                We received a request to reset your password. Click the button below to create a new password:
+              </p>
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${resetUrl}" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 15px 40px; text-decoration: none; border-radius: 25px; font-weight: bold; display: inline-block;">
+                  Reset Password
+                </a>
+              </div>
+              <p style="color: #999; font-size: 12px; text-align: center;">
+                This link will expire in <strong>1 hour</strong>.
+              </p>
+              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
+              <p style="color: #999; font-size: 12px;">
+                If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
+              </p>
+              <p style="color: #999; font-size: 12px;">
+                If the button doesn't work, copy and paste this link into your browser:<br>
+                <a href="${resetUrl}" style="color: #667eea; word-break: break-all;">${resetUrl}</a>
+              </p>
+            </div>
+            <p style="color: #999; font-size: 11px; text-align: center; margin-top: 20px;">
+              © ${new Date().getFullYear()} TBMD - Your Movie Database
+            </p>
+          </div>
+        `,
+      };
 
-    res.json({ message: "Reset link generated. Check server console.", link: resetUrl });
+      await transporter.sendMail(mailOptions);
+      console.log("--------------------------------------------------");
+      console.log(`✅ Password reset email sent to: ${user.email}`);
+      console.log("🔑 PASSWORD RESET LINK:");
+      console.log(resetUrl);
+      console.log("--------------------------------------------------");
+      res.json({ message: "Password reset link has been sent to your email.", link: resetUrl });
+    } else {
+      // DEV MODE: Log link to console
+      console.log("--------------------------------------------------");
+      console.log("🔑 PASSWORD RESET LINK (Dev Mode - No email configured):");
+      console.log(resetUrl);
+      console.log("--------------------------------------------------");
+      res.json({ message: "Reset link generated. Check server console.", link: resetUrl });
+    }
   } catch (err) {
     console.error("❌ Error:", err);
-    res.status(500).json({ error: "Error generating reset link" });
+    res.status(500).json({ error: "Error sending reset email" });
   }
 });
 

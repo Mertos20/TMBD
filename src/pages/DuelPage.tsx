@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useTheme } from "../components/ThemaContext";
 import { DuelCard, DuelPodium, DuelCalendar } from "../components/duel";
+import { API_URL } from "../config/api";
 
 interface Movie {
   id: number;
@@ -47,8 +48,8 @@ const DuelPage = () => {
   const fetchDailyData = async () => {
     try {
       const [moviesRes, podiumRes] = await Promise.all([
-        fetch("http://localhost:5000/api/duel/daily"),
-        fetch("http://localhost:5000/api/duel/daily-podium")
+        fetch(`${API_URL}/api/duel/daily`),
+        fetch(`${API_URL}/api/duel/daily-podium`)
       ]);
       
       const movies = await moviesRes.json();
@@ -131,7 +132,7 @@ const DuelPage = () => {
 
     // Send vote to backend
     try {
-      await fetch("http://localhost:5000/api/duel/vote", {
+      await fetch(`${API_URL}/api/duel/vote`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ 
@@ -164,7 +165,7 @@ const DuelPage = () => {
         };
 
         // Refresh podium
-        const res = await fetch("http://localhost:5000/api/duel/daily-podium");
+        const res = await fetch(`${API_URL}/api/duel/daily-podium`);
         setPodium(await res.json());
       } else {
         // Prepare Next Round
@@ -261,7 +262,7 @@ const DuelPage = () => {
           <div className="py-20 bg-white/5 backdrop-blur-md rounded-3xl border border-white/10 shadow-2xl mx-4">
             <div className="text-6xl mb-6">⚔️</div>
             <h2 className="text-2xl font-bold mb-4 text-white">Ready for today's challenge?</h2>
-            <p className="mb-8 opacity-80 text-gray-200">32 Movies. 5 Rounds. 1 Winner.</p>
+            <p className="mb-8 opacity-80 text-gray-200">8 Movies. 3 Rounds. 1 Winner.</p>
             <button 
               onClick={startTournament}
               className="px-8 py-4 bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] text-white font-bold rounded-full text-xl hover:from-teal-400 hover:to-cyan-500 hover:scale-105 transition-all shadow-lg shadow-teal-500/50 ring-2 ring-white/20"

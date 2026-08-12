@@ -1,4 +1,4 @@
-import { useState, FormEvent } from "react";
+import { useState, useEffect, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import heroBg from "../aspects/Hero4.png";
 
@@ -10,6 +10,33 @@ type HeroProps = {
 export default function Hero({ onSearch }: HeroProps) {
   const [q, setQ] = useState("");
   const navigate = useNavigate();
+  const [bgIndex, setBgIndex] = useState(0);
+  const [userName, setUserName] = useState(localStorage.getItem("username") || "");
+  const [backgrounds, setBackgrounds] = useState<string[]>([heroBg]);
+
+  const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
+
+  useEffect(() => {
+    fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${API_KEY}&language=en-US&page=1`)
+      .then((res) => res.json())
+      .then((data) => {
+        const paths = data.results
+          .filter((m: any) => m.backdrop_path)
+          .map((m: any) => `https://image.tmdb.org/t/p/original${m.backdrop_path}`);
+        
+        if (paths.length > 0) {
+          setBackgrounds(paths);
+        }
+      })
+      .catch((err) => console.error("Hero background fetch error:", err));
+  }, []);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setBgIndex((prev) => (prev + 1) % backgrounds.length);
+    }, 5000); // 5 saniyede bir değişim
+    return () => clearInterval(interval);
+  }, [backgrounds]);
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
@@ -24,9 +51,10 @@ export default function Hero({ onSearch }: HeroProps) {
     <section className="relative w-full h-auto md:h-[300px] overflow-hidden py-[30px] px-4 md:px-10">
       {/* Background */}
       <img
-        src={heroBg}
+        src={backgrounds[bgIndex]}
         alt="hero"
-        className="absolute inset-0 h-full w-full object-cover"
+        className="absolute inset-0 h-full w-full object-cover transition-opacity duration-1000"
+        onError={(e) => (e.currentTarget.style.display = "none")}
       />
       <div className="absolute inset-0 bg-[#01b4e4] mix-blend-multiply opacity-[0.84]" />
       <div className="absolute inset-0 bg-gradient-to-b from-[#032541]/70 via-[#032541]/10 to-transparent" />
@@ -36,8 +64,20 @@ export default function Hero({ onSearch }: HeroProps) {
         
         {/* TEXT AREA */}
         <div className="mb-4 w-full max-w-[1220px]">
-          <p className="text-white font-bold tracking-[-0.02em] text-3xl sm:text-4xl md:text-[48px] m-0 leading-tight flex items-center gap-3">
-            Welcome.
+          <p className="text-white font-bold tracking-[-0.02em] text-3xl sm:text-4xl md:text-[48px] m-0 leading-tight">
+            {userName ? (
+              <>
+                Welcome{" "}
+                <span className="bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] bg-clip-text text-transparent">
+                  {userName}
+                </span>
+                .
+              </>
+            ) : (
+              <span className="bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] bg-clip-text text-transparent">
+                Welcome.
+              </span>
+            )}
           </p>
 
           <p className="text-white font-semibold text-base sm:text-xl md:text-[30px] m-0 leading-tight">

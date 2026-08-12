@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
+import { API_URL } from "../config/api";
 import VideoModal from "../components/VideoModal";
 import ScoreBadge from "../components/ScoreBadge";
 import Emoji1 from "../aspects/emoji1.svg";
@@ -10,7 +11,7 @@ import Facebook from "../aspects/facebook.svg";
 import Twitter from "../aspects/twitter.svg";
 import { useTheme } from "../components/ThemaContext";
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 const IMAGE_BASE = "https://image.tmdb.org/t/p";
 
 const MOVIE_QUOTES = [
@@ -46,63 +47,63 @@ const LoadingClapperboard = () => {
   return (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/80 backdrop-blur-md transition-colors duration-700">
       <div className="relative w-80 select-none">
-        
+
         {/* Üst Parça (Clapper Stick) - Sürekli Çakan Animasyon */}
-        <div 
+        <div
           className="h-16 bg-[#1a1a1a] rounded-t-xl origin-bottom-left relative z-20 animate-clap-loop"
-          style={{ 
+          style={{
             backgroundImage: "repeating-linear-gradient(135deg, transparent, transparent 20px, white 20px, white 40px)",
             boxShadow: "0 4px 6px rgba(0,0,0,0.5)"
           }}
         >
-            {/* Menteşe Detayı */}
-            <div className="absolute bottom-2 left-2 w-4 h-4 rounded-full bg-neutral-400 border-2 border-neutral-600 shadow-inner z-30" />
+          {/* Menteşe Detayı */}
+          <div className="absolute bottom-2 left-2 w-4 h-4 rounded-full bg-neutral-400 border-2 border-neutral-600 shadow-inner z-30" />
         </div>
 
         {/* Alt Parça (Board) */}
         <div className="h-80 bg-[#1a1a1a] rounded-b-xl shadow-2xl flex flex-col relative overflow-hidden border-t-4 border-white">
-           {/* Alt parçanın üst şeridi */}
-           <div className="h-4 w-full absolute top-0 left-0" 
-                style={{ backgroundImage: "repeating-linear-gradient(135deg, transparent, transparent 20px, white 20px, white 40px)" }} 
-           />
-           
-           <div className="p-6 mt-4 flex flex-col h-full justify-between">
-               {/* Bilgi Izgarası */}
-               <div className="grid grid-cols-2 gap-px bg-white/20 border border-white/20 rounded-lg overflow-hidden">
-                   <div className="bg-[#222] p-3">
-                       <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Production</p>
-                       <p className="text-white font-mono font-bold text-lg truncate">MOVIBASE</p>
-                   </div>
-                   <div className="bg-[#222] p-3">
-                       <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Scene</p>
-                       <p className="text-[#1DB954] font-mono text-lg font-bold">VIBE CHECK</p>
-                   </div>
-                   <div className="bg-[#222] p-3">
-                       <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Take</p>
-                       <p className="text-red-500 font-mono text-xl font-bold animate-pulse">REC</p>
-                   </div>
-                   <div className="bg-[#222] p-3">
-                       <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Director</p>
-                       <p className="text-white font-mono text-sm truncate">AI & SPOTIFY</p>
-                   </div>
-               </div>
+          {/* Alt parçanın üst şeridi */}
+          <div className="h-4 w-full absolute top-0 left-0"
+            style={{ backgroundImage: "repeating-linear-gradient(135deg, transparent, transparent 20px, white 20px, white 40px)" }}
+          />
 
-               {/* Aksiyon Yazısı */}
-               <div className="text-center mt-4 flex flex-col items-center justify-center flex-1">
-                   <h2 className="text-3xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] mb-2">
-                       LOADING
-                   </h2>
-                   
-                   <div key={quoteIndex} className="flex flex-col items-center justify-center animate-fade-in px-2">
-                     <p className="text-xs text-[#1DB954] font-mono animate-pulse mb-3">Connecting to Spotify...</p>
-                     <p className="text-sm text-white/90 italic font-serif text-center leading-tight">"{quote.text}"</p>
-                     <p className="text-[10px] text-white/50 uppercase mt-1">- {quote.movie}</p>
-                   </div>
-               </div>
-           </div>
-           
-           {/* Parlama efekti */}
-           <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
+          <div className="p-6 mt-4 flex flex-col h-full justify-between">
+            {/* Bilgi Izgarası */}
+            <div className="grid grid-cols-2 gap-px bg-white/20 border border-white/20 rounded-lg overflow-hidden">
+              <div className="bg-[#222] p-3">
+                <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Production</p>
+                <p className="text-white font-mono font-bold text-lg truncate">MOVIBASE</p>
+              </div>
+              <div className="bg-[#222] p-3">
+                <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Scene</p>
+                <p className="text-[#1DB954] font-mono text-lg font-bold">VIBE CHECK</p>
+              </div>
+              <div className="bg-[#222] p-3">
+                <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Take</p>
+                <p className="text-red-500 font-mono text-xl font-bold animate-pulse">REC</p>
+              </div>
+              <div className="bg-[#222] p-3">
+                <p className="text-[10px] text-white/50 uppercase font-bold tracking-wider">Director</p>
+                <p className="text-white font-mono text-sm truncate">AI & SPOTIFY</p>
+              </div>
+            </div>
+
+            {/* Aksiyon Yazısı */}
+            <div className="text-center mt-4 flex flex-col items-center justify-center flex-1">
+              <h2 className="text-3xl font-black text-white tracking-[0.2em] drop-shadow-[0_2px_4px_rgba(0,0,0,0.5)] mb-2">
+                LOADING
+              </h2>
+
+              <div key={quoteIndex} className="flex flex-col items-center justify-center animate-fade-in px-2">
+                <p className="text-xs text-[#1DB954] font-mono animate-pulse mb-3">Connecting to Spotify...</p>
+                <p className="text-sm text-white/90 italic font-serif text-center leading-tight">"{quote.text}"</p>
+                <p className="text-[10px] text-white/50 uppercase mt-1">- {quote.movie}</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Parlama efekti */}
+          <div className="absolute inset-0 bg-gradient-to-tr from-white/5 to-transparent pointer-events-none" />
         </div>
       </div>
 
@@ -133,7 +134,7 @@ interface DetailPageProps {
 }
 
 const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
-  const { darkMode } = useTheme(); 
+  const { darkMode } = useTheme();
   const navigate = useNavigate();
 
   const [data, setData] = useState<any>(null);
@@ -151,7 +152,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
   const [hoverRating, setHoverRating] = useState(0);
   const [averageRating, setAverageRating] = useState("0");
   const [userRating, setUserRating] = useState(0);
-  
+
   // Report states
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportingComment, setReportingComment] = useState<any>(null);
@@ -168,11 +169,10 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
     async function fetchRatings() {
       if (!id) return;
       try {
-        const res = await fetch(`http://localhost:5000/api/ratings/${id}`);
+        const res = await fetch(`${API_URL}/api/ratings/${id}`);
         if (res.ok) {
           const data = await res.json();
           setAverageRating(data.average);
-          
           if (userId) {
             const myRating = data.ratings.find((r: any) => r.userId === userId);
             if (myRating) setUserRating(myRating.rating);
@@ -191,11 +191,11 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       return;
     }
     try {
-      const res = await fetch(`http://localhost:5000/api/ratings`, {
+      const res = await fetch(`${API_URL}/api/ratings`, {
         method: "POST",
-        headers: { 
+        headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ movieId: id, rating: value }),
       });
@@ -203,15 +203,14 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       if (res.ok) {
         const updated = await res.json();
         setUserRating(updated.rating);
-        // Refresh average
-        const ratingsRes = await fetch(`http://localhost:5000/api/ratings/${id}`);
+        const ratingsRes = await fetch(`${API_URL}/api/ratings/${id}`);
         const ratingsData = await ratingsRes.json();
         setAverageRating(ratingsData.average);
       } else if (res.status === 401) {
         alert("Session expired. Please login again.");
         localStorage.removeItem("token");
         localStorage.removeItem("userId");
-        navigate("/login"); 
+        navigate("/login");
       } else {
         alert("Failed to submit rating.");
       }
@@ -223,31 +222,23 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
   useEffect(() => {
     if (!data) return;
-
     const consent = localStorage.getItem("cookieConsent");
     if (!consent) return;
-
     const genreStats = JSON.parse(localStorage.getItem("genreStats") || "{}");
-
     data.genres?.forEach((g: any) => {
       genreStats[g.id] = (genreStats[g.id] || 0) + 1;
     });
-
     localStorage.setItem("genreStats", JSON.stringify(genreStats));
   }, [data]);
 
-  // Scroll top
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [type, id]);
 
-  // Film/TV detaylarını çek
   useEffect(() => {
     async function fetchDetail() {
       if (!type || !id) return;
-
       const url = `https://api.themoviedb.org/3/${type}/${id}?api_key=${API_KEY}&language=en-US&append_to_response=videos,credits,keywords,external_ids,recommendations,reviews,watch/providers`;
-
       const res = await fetch(url);
       if (!res.ok) {
         setLoading(false);
@@ -255,51 +246,46 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       }
       const json = await res.json();
       setData(json);
-
       const trailer = json.videos?.results.find(
         (v: any) => v.type === "Trailer" && v.site === "YouTube"
       );
       if (trailer) setVideoId(trailer.key);
-
       setLoading(false);
     }
-
     fetchDetail();
   }, [type, id]);
 
-  // Yorumları çek
-  useEffect(() => {
-    async function fetchComments() {
+  const fetchComments = async () => {
       if (!id) return;
-      const token = localStorage.getItem("token");
-      const res = await fetch(`http://localhost:5000/api/comments/${id}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) {
-        const data = await res.json();
-        setComments(data);
+      try {
+          const res = await fetch(`${API_URL}/api/comments/${id}`, {
+              headers: { Authorization: `Bearer ${token || ""}` },
+          });
+          const data = await res.json();
+          setComments(data);
+      } catch (err) {
+          console.error(err);
       }
-    }
-    fetchComments();
+  };
+
+  useEffect(() => {
+      fetchComments();
   }, [id]);
 
   useEffect(() => {
     if (!token) return;
-
-    const fetchFavorite = async () => {
+    const checkFavorite = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/favorites/${id}`, {
+        const res = await fetch(`${API_URL}/api/favorites/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setIsFavorite(data.isFavorite);
       } catch (err) {
-        console.error("Favori kontrol hatası:", err);
+        console.error(err);
       }
     };
-
-    fetchFavorite();
+    checkFavorite();
   }, [id, token]);
 
   const toggleFavorite = async () => {
@@ -307,16 +293,15 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       alert("Beğenmek için giriş yap!");
       return;
     }
-
     try {
       if (isFavorite) {
-        await fetch(`http://localhost:5000/api/favorites/${id}`, {
+        await fetch(`${API_URL}/api/favorites/${id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
         setIsFavorite(false);
       } else {
-        await fetch("http://localhost:5000/api/favorites", {
+        await fetch(`${API_URL}/api/favorites`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -338,20 +323,17 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
   useEffect(() => {
     if (!token) return;
-
     const fetchWatchList = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/watchlists/${id}`, {
+        const res = await fetch(`${API_URL}/api/watchlists/${id}`, {
           headers: { Authorization: `Bearer ${token}` },
         });
-        if (!res.ok) throw new Error(`HTTP ${res.status}`);
         const data = await res.json();
         setIsWatchlist(data.isWatchlist);
       } catch (err) {
         console.error("watch list kontrol hatası:", err);
       }
     };
-
     fetchWatchList();
   }, [id, token]);
 
@@ -360,16 +342,15 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       alert("Eklemek için giriş yap!");
       return;
     }
-
     try {
       if (isWatchlist) {
-        await fetch(`http://localhost:5000/api/watchlists/${id}`, {
+        await fetch(`${API_URL}/api/watchlists/${id}`, {
           method: "DELETE",
           headers: { Authorization: `Bearer ${token}` },
         });
         setIsWatchlist(false);
       } else {
-        await fetch("http://localhost:5000/api/watchlists", {
+        await fetch(`${API_URL}/api/watchlists`, {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
@@ -391,49 +372,38 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
   const handleAddComment = async () => {
     if (!newComment) return;
-    const token = localStorage.getItem("token");
-    
     try {
-      const res = await fetch(`http://localhost:5000/api/comments`, {
+      const res = await fetch(`${API_URL}/api/comments`, {
         method: "POST",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ movieId: id, comment: newComment, rating: 0 }), 
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token || ""}` },
+        body: JSON.stringify({ movieId: id, media_type: mediaType, comment: newComment }),
       });
-
       if (res.ok) {
-        const savedComment = await res.json();
-        setComments([savedComment, ...comments]);
         setNewComment("");
+        fetchComments();
       } else {
-        console.log("Error adding comment");
-        alert("Failed to add comment. Please try again.");
+        alert("Failed to add comment.");
       }
     } catch (error) {
       console.error("Error adding comment:", error);
-      alert("Server error. Please check if the backend is running.");
     }
   };
 
   const handleDeleteComment = async (commentId: string, commentOwnerId: string, reporterId?: string) => {
-    const token = localStorage.getItem("token");
-    const res = await fetch(`http://localhost:5000/api/comments/${commentId}`, {
+    const res = await fetch(`${API_URL}/api/comments/${commentId}`, {
       method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
+      headers: { Authorization: `Bearer ${token || ""}` },
     });
-
     if (res.ok) {
       setComments(comments.filter((c) => c._id !== commentId));
-
-      // Sadece Admin işlem yaptığında bildirim gönder
       if (isAdmin) {
-        // 1. Yorum Sahibine Bildirim (Eğer admin kendisi değilse)
         if (commentOwnerId && commentOwnerId !== userId) {
           try {
-            const notifRes = await fetch("http://localhost:5000/api/notifications", {
+            const notifRes = await fetch(`${API_URL}/api/notifications`, {
               method: "POST",
-              headers: { 
+              headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}` 
+                Authorization: `Bearer ${token}`
               },
               body: JSON.stringify({
                 receiverId: commentOwnerId,
@@ -450,11 +420,11 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         // 2. Raporlayan Kullanıcıya Bildirim (Eğer varsa ve admin kendisi değilse)
         if (reporterId && reporterId !== userId) {
           try {
-            await fetch("http://localhost:5000/api/notifications", {
+            await fetch(`${API_URL}/api/notifications`, {
               method: "POST",
-              headers: { 
+              headers: {
                 "Content-Type": "application/json",
-                Authorization: `Bearer ${token}` 
+                Authorization: `Bearer ${token}`
               },
               body: JSON.stringify({
                 receiverId: reporterId,
@@ -475,10 +445,10 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
   // Report comment handler
   const handleReportComment = async () => {
     if (!reportingComment || !token) return;
-    
+
     setReportLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/reports", {
+      const res = await fetch(`${API_URL}/api/reports`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -519,16 +489,16 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       createVibePlaylist();
       return;
     }
-    
+
     // 2. Show loading immediately (Clapperboard appears)
     setVibeLoading(true);
-    
+
     const width = 450;
     const height = 600;
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
-    const loginUrl = "https://latanya-juicier-lanelle.ngrok-free.dev/spotify/login";
+    const loginUrl = " https://latanya-juicier-lanelle.ngrok-free.dev/spotify/login";
 
     const popup = window.open(
       loginUrl,
@@ -542,9 +512,9 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         clearInterval(checkPopup);
         // If popup is closed and we don't have a token yet (user closed it manually), stop loading
         setTimeout(() => {
-             if (!localStorage.getItem("spotify_access_token")) {
-                 setVibeLoading(false);
-             }
+          if (!localStorage.getItem("spotify_access_token")) {
+            setVibeLoading(false);
+          }
         }, 500);
       }
     }, 1000);
@@ -556,7 +526,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       const { access_token } = e.data;
       if (access_token) {
         localStorage.setItem("spotify_access_token", access_token);
-        
+
         clearInterval(checkPopup);
 
         popup?.close();
@@ -600,7 +570,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
     }
 
     // Timeout promise
-    const timeoutPromise = new Promise((_, reject) => 
+    const timeoutPromise = new Promise((_, reject) =>
       setTimeout(() => reject(new Error("TIMEOUT")), 15000)
     );
 
@@ -639,7 +609,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
             return;
           }
 
-          const playlistRes = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/spotify/create-playlist", {
+          const playlistRes = await fetch(" https://latanya-juicier-lanelle.ngrok-free.dev/spotify/create-playlist", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
@@ -677,20 +647,18 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
   if (!data) return <div className="p-4">Not found</div>;
 
   return (
-    <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-black" } w-full relative`}>
+    <div className={`${darkMode ? "bg-gray-900 text-white" : "bg-white text-black"} w-full relative`}>
       {/* Loading Clapperboard Overlay */}
       {vibeLoading && <LoadingClapperboard />}
 
       {/* Modern Toast Notification */}
       <div className={`fixed top-24 right-5 z-[100] transition-all duration-500 transform ${toast.show ? "translate-x-0 opacity-100" : "translate-x-10 opacity-0 pointer-events-none"}`}>
-        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border min-w-[320px] ${
-          toast.type === "success" 
-            ? "bg-green-500/10 border-green-500/20 text-green-500" 
-            : "bg-red-500/10 border-red-500/20 text-red-500"
-        }`}>
-          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${
-            toast.type === "success" ? "bg-green-500/20" : "bg-red-500/20"
+        <div className={`flex items-center gap-4 px-6 py-4 rounded-2xl shadow-2xl backdrop-blur-xl border min-w-[320px] ${toast.type === "success"
+          ? "bg-green-500/10 border-green-500/20 text-green-500"
+          : "bg-red-500/10 border-red-500/20 text-red-500"
           }`}>
+          <div className={`w-12 h-12 rounded-full flex items-center justify-center flex-shrink-0 ${toast.type === "success" ? "bg-green-500/20" : "bg-red-500/20"
+            }`}>
             {toast.type === "success" ? (
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
@@ -710,7 +678,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
       {/* Main Content - Blurred when loading */}
       <div className={`transition-all duration-700 ${vibeLoading ? 'blur-md brightness-[0.4] pointer-events-none' : ''}`}>
-        <div className="relative w-full h-auto md:h-[570px] border-b border-black/10">
+        <div className="relative w-full h-auto md:min-h-[570px] border-b border-black/10">
           {data.backdrop_path && (
             <div className="absolute inset-0 z-0">
               <img
@@ -723,7 +691,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
           )}
           <div className="absolute inset-0 z-10 bg-[#f8e9ed] opacity-50" />
 
-          <div className="relative z-10 flex flex-col md:flex-row w-full md:w-[1400px] h-full mx-auto px-4 md:px-10 py-[30px] text-white">
+          <div className="relative z-10 flex flex-col md:flex-row w-full md:w-[1400px] md:min-h-[570px] mx-auto px-4 md:px-10 py-[30px] text-white">
             <div className="flex-shrink-0 mx-auto md:mx-0 mb-6 md:mb-0">
               {data.poster_path && (
                 <img
@@ -775,7 +743,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
               <div className="flex items-center gap-4">
                 <ScoreBadge value={Math.round(data.vote_average * 10)} size={60} />
-                
+
                 <button
                   onClick={handleVibeClick}
                   className="bg-[#32cd32] text-white px-4 py-2 rounded-full font-semibold"
@@ -857,8 +825,8 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                       <div className="flex gap-3 flex-wrap">
                         {providers.flatrate.map((provider: any) => (
                           <div key={provider.provider_id} className="relative group">
-                            <img 
-                              src={`https://image.tmdb.org/t/p/original${provider.logo_path}`} 
+                            <img
+                              src={`https://image.tmdb.org/t/p/original${provider.logo_path}`}
                               alt={provider.provider_name}
                               title={provider.provider_name}
                               className="w-10 h-10 rounded-lg shadow-md transition-transform transform group-hover:scale-110"
@@ -891,7 +859,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
         {/* Cast */}
         {data.credits?.cast?.length > 0 && (
           <div className="w-full md:w-[1400px] mx-auto px-4 md:px-10 py-[30px] flex flex-col md:flex-row gap-8">
-            
+
             <div className="w-full md:w-[1050px]">
               <h2 className="text-2xl font-semibold mb-4">Top Billed Cast</h2>
               <div className="flex gap-4 overflow-x-auto scrollbar-thin scrollbar-thumb-gray-400 scrollbar-track-gray-200">
@@ -920,8 +888,8 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                 <div className="flex items-center gap-4 mb-4">
                   <h3 className="text-2xl font-semibold">Comments</h3>
                   <div className="flex items-center gap-2">
-                     <span className="text-yellow-500 text-xl">★</span>
-                     <span className="font-semibold text-lg">({averageRating})</span>
+                    <span className="text-yellow-500 text-xl">★</span>
+                    <span className="font-semibold text-lg">({averageRating})</span>
                   </div>
                 </div>
 
@@ -933,9 +901,8 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                       <button
                         key={star}
                         type="button"
-                        className={`text-3xl transition-colors focus:outline-none ${
-                          (hoverRating || userRating) >= star ? "text-yellow-400" : "text-gray-300"
-                        }`}
+                        className={`text-3xl transition-colors focus:outline-none ${(hoverRating || userRating) >= star ? "text-yellow-400" : "text-gray-300"
+                          }`}
                         onMouseEnter={() => setHoverRating(star)}
                         onMouseLeave={() => setHoverRating(0)}
                         onClick={() => handleRate(userRating === star ? 0 : star)}
@@ -955,15 +922,14 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                     value={newComment}
                     onChange={(e) => setNewComment(e.target.value)}
                   />
-                  
+
                   <button
                     onClick={handleAddComment}
                     disabled={!newComment}
-                    className={`font-semibold px-4 py-2 rounded-lg transition-colors w-fit ${
-                      !newComment 
-                        ? "bg-gray-400 cursor-not-allowed text-gray-200" 
-                        : "bg-[#032541] text-white hover:bg-[#0E2A33]"
-                    }`}
+                    className={`font-semibold px-4 py-2 rounded-lg transition-colors w-fit ${!newComment
+                      ? "bg-gray-400 cursor-not-allowed text-gray-200"
+                      : "bg-[#032541] text-white hover:bg-[#0E2A33]"
+                      }`}
                   >
                     Add Comment
                   </button>
@@ -980,8 +946,8 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
                         className={`p-4 border rounded-lg shadow-md ${darkMode ? "bg-gray-800 border-gray-700" : "bg-white border-black/10"}`}
                       >
                         <div className="flex items-baseline gap-2 mb-1">
-                          <Link 
-                            to={`/profile/${c.userId}`} 
+                          <Link
+                            to={`/profile/${c.userId}`}
                             className={`font-semibold hover:underline ${darkMode ? "text-blue-400" : "text-blue-600"}`}
                           >
                             {c.username}
@@ -1049,7 +1015,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
             {/* Sidebar */}
             <div className="w-full md:w-[300px] flex-shrink-0 space-y-4">
-            
+
               <div className="flex items-center gap-2">
                 {[Facebook, Twitter, Instagram].map((src, i) => (
                   <a key={i} href="#" className="hover:opacity-80">
@@ -1097,16 +1063,16 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
             <h3 className="text-xl font-bold mb-4 flex items-center gap-2">
               ⚠️ Report Comment
             </h3>
-            
+
             <div className={`p-4 rounded-lg mb-4 ${darkMode ? "bg-gray-700" : "bg-gray-100"}`}>
               <p className="text-sm opacity-70 mb-1">Comment by <strong>{reportingComment.username}</strong>:</p>
               <p className={`italic ${darkMode ? "text-gray-300" : "text-gray-700"}`}>"{reportingComment.comment}"</p>
             </div>
-            
+
             <p className="mb-6">
               Do you find this comment suspicious and want to report it to the admin for review?
             </p>
-            
+
             <div className="flex justify-end gap-3">
               <button
                 onClick={() => {

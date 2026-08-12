@@ -106,7 +106,30 @@ router.put("/:id", async (req, res) => {
 
     // If admin chooses to delete the comment
     if (deleteComment && status === "deleted") {
-      await Comment.findByIdAndDelete(report.commentId);
+      try {
+        // Delete the comment
+        const deletedComment = await Comment.findByIdAndDelete(report.commentId);
+        console.log("✅ Comment deleted:", report.commentId, deletedComment);
+        
+        // Send warning notification to the comment author
+        console.log("📧 Preparing notification for recipient:", report.commentAuthor);
+        console.log("📧 Recipient type:", typeof report.commentAuthor);
+        
+        const notificationData = {
+          recipient: report.commentAuthor,
+          type: "warning",
+          message: `Your comment has been removed due to a violation. Please follow our community guidelines. Continuing this behavior may result in account suspension.`
+        };
+        
+        console.log("📧 Notification data:", notificationData);
+        
+        const warningNotification = new Notification(notificationData);
+        const savedNotification = await warningNotification.save();
+        console.log("✅ Notification saved successfully:", savedNotification._id);
+      } catch (notifErr) {
+        console.error("❌ Error sending warning notification:", notifErr);
+        console.error("Error details:", notifErr.message, notifErr.stack);
+      }
     }
 
     report.status = status;

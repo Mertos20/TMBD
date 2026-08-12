@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../components/ThemaContext";
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w200";
 
 interface Item {

@@ -1,9 +1,9 @@
 import express from "express";
-import { GoogleGenerativeAI } from "@google/generative-ai";
 import fetch from "node-fetch";
+import { generateAIText } from "../utils/aiFoundry.js";
 
 const router = express.Router();
-const TMDB_API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const TMDB_API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 router.post("/", async (req, res) => {
   try {
@@ -12,13 +12,10 @@ router.post("/", async (req, res) => {
 
     console.log("User message:", message);
 
-    // Gemini AI
+    // Azure AI Foundry
     let parsedData = { sentiment: "neutral", movies: [] };
     
     try {
-      const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-      
       const prompt = `
         Analyze the sentiment of the user's input: "${message}".
         Based on this sentiment, suggest 10 movies or TV shows.
@@ -31,20 +28,23 @@ router.post("/", async (req, res) => {
         Do not include any markdown formatting like \`\`\`json. Just the raw JSON string.
       `;
 
-      const response = await model.generateContent(prompt);
-      const rawText = response.response.text().replace(/```json|```/g, "").trim();
-      console.log("Gemini response:", rawText);
+      const rawText = await generateAIText({
+        prompt,
+        systemPrompt: "You are a movie recommendation assistant. Always return valid JSON as requested.",
+        temperature: 0.7,
+        jsonMode: true,
+      });
+
+      const cleanedText = rawText.replace(/```json|```/g, "").trim();
+      console.log("Azure AI Foundry response:", cleanedText);
       
-      parsedData = JSON.parse(rawText);
+      parsedData = JSON.parse(cleanedText);
     } catch (err) {
-      console.error("❌ Gemini API Error:", err);
-      if (err.message && (err.message.includes("403") || err.message.includes("API key"))) {
-        console.error("🚨 CRITICAL: Your Gemini API Key is invalid or reported as leaked. Please generate a new one and update your .env file.");
-      }
-      return res.status(500).json({ error: "Gemini API failed" });
+      console.error("❌ Azure AI Foundry Error:", err);
+      return res.status(500).json({ error: "Azure AI Foundry API failed" });
     }
 
-    const titles = parsedData.movies.slice(0, 10);
+    const titles = (parsedData.movies || []).slice(0, 10);
     console.log("Parsed titles:", titles);
     console.log("Detected sentiment:", parsedData.sentiment);
 
@@ -74,7 +74,7 @@ router.post("/", async (req, res) => {
 
     res.json({ 
       reply: tmdbResults.filter(Boolean),
-      sentiment: parsedData.sentiment 
+      sentiment: parsedData.sentiment || "neutral"
     });
 
   } catch (err) {
@@ -87,9 +87,6 @@ router.post("/analyze-character", async (req, res) => {
   try {
     const { genres, totalWatched, username } = req.body;
 
-    const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
-    const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
-
     const prompt = `
       Analyze the movie watching character of a user named ${username}.
       They have watched ${totalWatched} items in total.
@@ -100,9 +97,11 @@ router.post("/analyze-character", async (req, res) => {
       Tell them what kind of viewer they are (e.g., "The Adrenaline Junkie", "The Hopeless Romantic", "The Intellectual", etc.).
     `;
 
-    const result = await model.generateContent(prompt);
-    const response = await result.response;
-    const text = response.text();
+    const text = await generateAIText({
+      prompt,
+      systemPrompt: "You are an insightful and humorous film critic and user personality analyzer.",
+      temperature: 0.8,
+    });
 
     res.json({ analysis: text });
   } catch (error) {
@@ -112,3 +111,4 @@ router.post("/analyze-character", async (req, res) => {
 });
 
 export default router;
+

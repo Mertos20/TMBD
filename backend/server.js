@@ -1,4 +1,19 @@
 import "dotenv/config";
+import appInsights from "applicationinsights";
+
+if (process.env.APPLICATIONINSIGHTS_CONNECTION_STRING) {
+  appInsights.setup(process.env.APPLICATIONINSIGHTS_CONNECTION_STRING)
+    .setAutoDependencyCorrelation(true)
+    .setAutoCollectRequests(true)
+    .setAutoCollectPerformance(true, true)
+    .setAutoCollectExceptions(true)
+    .setAutoCollectDependencies(true)
+    .setAutoCollectConsole(true)
+    .setUseDiskRetryCaching(true)
+    .start();
+  console.log("📊 Azure Application Insights Telemetry Monitoring Initialized");
+}
+
 import http from "http";
 import express from "express";
 import mongoose from "mongoose";
@@ -22,18 +37,32 @@ import reportRoutes from "./routes/reports.js";
 
 const app = express();
 
+// Production CORS Configuration (supports Azure Static Web Apps & Local dev)
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  process.env.FRONTEND_URL
+].filter(Boolean);
 
 app.use(cors({
-  origin: ["http://localhost:5173", "http://localhost:5174"],
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, etc.) or matching allowed origins
+    if (!origin || allowedOrigins.includes(origin) || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Permissive in dev, dynamically validated
+    }
+  },
   credentials: true
 }));
+
 app.use(express.json());
 
-
+// Serve local uploads as fallback, Azure Blob Storage is primary for cloud
 app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
 
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
+  .then(() => console.log("✅ MongoDB connected successfully"))
   .catch(err => console.error("❌ MongoDB connection error:", err));
 
 

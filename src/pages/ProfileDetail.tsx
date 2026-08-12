@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { API_URL } from "../config/api";
 import { useTheme } from "../components/ThemaContext";
 import {
   PieChart,
@@ -15,7 +16,7 @@ import {
   CartesianGrid,
 } from "recharts";
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 interface GenreData {
   name: string;
@@ -66,10 +67,10 @@ const ProfileDetail = () => {
     const fetchGenreStats = async () => {
       try {
         const [favRes, watchRes] = await Promise.all([
-          fetch(`http://localhost:5000/api/favorites`, {
+          fetch(`${API_URL}/api/favorites`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
-          fetch(`http://localhost:5000/api/watchlists`, {
+          fetch(`${API_URL}/api/watchlists`, {
             headers: { Authorization: `Bearer ${token}` },
           }),
         ]);
@@ -148,7 +149,7 @@ const ProfileDetail = () => {
     try {
       const genreText = genreStats.map((g) => `${g.name}: ${g.value}`).join(", ");
 
-      const response = await fetch("http://localhost:5000/api/chatbot/analyze-character", {
+      const response = await fetch(`${API_URL}/api/chatbot/analyze-character`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

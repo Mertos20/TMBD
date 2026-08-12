@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation } from "react-router-dom";
+import { API_URL } from "../config/api";
 import { FaMoon, FaRegMoon, FaBell } from "react-icons/fa";
 import { useTheme } from "./ThemaContext";
 
@@ -7,8 +8,8 @@ type NavbarProps = { onSearchClick: () => void };
 
 interface Notification {
   _id: string;
-  sender: { _id: string; username: string };
-  type: "follow" | "follow_request" | "follow_accepted" | "report";
+  sender?: { _id: string; username: string };
+  type: "follow" | "follow_request" | "follow_accepted" | "report" | "warning";
   message?: string;
   read: boolean;
   createdAt: string;
@@ -36,7 +37,7 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
   const fetchNotifications = async () => {
     if (!token) return;
     try {
-      const res = await fetch("http://localhost:5000/api/notifications", {
+      const res = await fetch(`${API_URL}/api/notifications`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (res.ok) {
@@ -49,7 +50,7 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
 
   const markAsRead = async (id: string) => {
     try {
-      await fetch(`http://localhost:5000/api/notifications/${id}/read`, {
+      await fetch(`${API_URL}/api/notifications/${id}/read`, {
         method: "PUT",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -203,8 +204,11 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
                                     } else if (n.type === "report") {
                                       navigate("/admin");
                                       setShowNotifications(false);
+                                    } else if (n.type === "warning") {
+                                      navigate("/profile");
+                                      setShowNotifications(false);
                                     } else {
-                                      navigate(`/profile/${n.sender._id}`);
+                                      navigate(`/profile/${n.sender?._id}`);
                                       setShowNotifications(false);
                                     }
                                   }}
@@ -214,12 +218,35 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
                                     {n.type === "follow" && <span className="text-blue-500">👤</span>}
                                     {n.type === "follow_accepted" && <span className="text-green-500">✅</span>}
                                     {n.type === "report" && <span className="text-red-500">⚠️</span>}
+                                    {n.type === "warning" && <span className="text-orange-500">🚨</span>}
                                     <span>
-                                      <span className="font-bold">{n.sender?.username || "User"}</span>
-                                      {n.type === "follow" && " started following you."}
-                                      {n.type === "follow_request" && " sent you a follow request."}
-                                      {n.type === "follow_accepted" && " accepted your follow request."}
-                                      {n.type === "report" && ` reported a comment.`}
+                                      {n.type === "follow" && (
+                                        <>
+                                          <span className="font-bold">{n.sender?.username || "User"}</span>
+                                          {" started following you."}
+                                        </>
+                                      )}
+                                      {n.type === "follow_request" && (
+                                        <>
+                                          <span className="font-bold">{n.sender?.username || "User"}</span>
+                                          {" sent you a follow request."}
+                                        </>
+                                      )}
+                                      {n.type === "follow_accepted" && (
+                                        <>
+                                          <span className="font-bold">{n.sender?.username || "User"}</span>
+                                          {" accepted your follow request."}
+                                        </>
+                                      )}
+                                      {n.type === "report" && (
+                                        <>
+                                          <span className="font-bold">Admin</span>
+                                          {" reviewed a report."}
+                                        </>
+                                      )}
+                                      {n.type === "warning" && (
+                                        <span>{n.message || "You have received a warning."}</span>
+                                      )}
                                     </span>
                                   </div>
                                   <div className="text-xs text-gray-400 mt-1">

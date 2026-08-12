@@ -5,7 +5,7 @@ import DailyTournament from "../models/DailyTournament.js";
 import DailyMovieStats from "../models/DailyMovieStats.js";
 
 const router = express.Router();
-const TMDB_API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const TMDB_API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 // Helper: Get today's date string YYYY-MM-DD
 const getTodayDate = () => {
@@ -33,7 +33,7 @@ router.get("/daily", async (req, res) => {
       allMovies = allMovies.filter(m => m.poster_path && m.title);
 
       // Shuffle and pick 32
-      const shuffled = allMovies.sort(() => 0.5 - Math.random()).slice(0, 32);
+      const shuffled = allMovies.sort(() => 0.5 - Math.random()).slice(0, 8);
 
       const tournamentMovies = shuffled.map(m => ({
         id: m.id,

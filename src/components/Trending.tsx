@@ -14,7 +14,7 @@ interface TMDBItem {
   media_type?: "movie" | "tv" | "person";
 }
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 const BAND_HEIGHT = 300;
 
 const Trending: React.FC = () => {

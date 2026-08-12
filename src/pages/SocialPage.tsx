@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useTheme } from "../components/ThemaContext";
 import { UserSearch, FeedItemCard } from "../components/social";
+import { API_URL } from "../config/api";
 
 interface User {
   _id: string;
@@ -23,7 +24,7 @@ interface FeedItem {
   moviePoster?: string;
 }
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 const SocialPage = () => {
   const { darkMode } = useTheme();
@@ -38,7 +39,7 @@ const SocialPage = () => {
   const handleSearch = async () => {
     if (!query) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/friends/search?query=${query}`, {
+      const res = await fetch(`${API_URL}/api/friends/search?query=${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setUsers(await res.json());
@@ -51,7 +52,7 @@ const SocialPage = () => {
   const toggleFollow = async (id: string, isFollowing: boolean) => {
     const endpoint = isFollowing ? "unfollow" : "follow";
     try {
-      await fetch(`http://localhost:5000/api/friends/${endpoint}/${id}`, {
+      await fetch(`${API_URL}/api/friends/${endpoint}/${id}`, {
         method: "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -67,7 +68,7 @@ const SocialPage = () => {
   const fetchFeed = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:5000/api/friends/feed`, {
+      const res = await fetch(`${API_URL}/api/friends/feed`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const data: FeedItem[] = await res.json();

@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
+import { API_URL } from "../config/api";
 
 const ForgotPassword = () => {
   const [email, setEmail] = useState("");
@@ -14,7 +15,7 @@ const ForgotPassword = () => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/forgot-password", {
+      const res = await fetch(`${API_URL}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email }),
@@ -22,8 +23,8 @@ const ForgotPassword = () => {
       const data = await res.json();
 
       if (res.ok) {
-        setMessage("Check your email for the reset link.");
-        // Log reset link to browser console for development
+        setMessage(data.message || "Check your email for the reset link.");
+        // Log reset link to browser console for development (only if link is returned)
         if (data.link) {
           console.log("--------------------------------------------------");
           console.log("🔑 PASSWORD RESET LINK (Dev Mode):");

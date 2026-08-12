@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
+import { API_URL } from "../config/api";
 import { FaEye, FaEyeSlash, FaFilm, FaTv, FaStar } from "react-icons/fa";
 
 // This new component will be an overlay that needs to be clicked.
@@ -126,7 +127,7 @@ const Login: React.FC = () => {
     setSuspendReason("");
     
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetch(`${API_URL}/api/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }),

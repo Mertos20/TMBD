@@ -21,7 +21,7 @@ const tabs = [
   { label: "In Theaters", key: "in_theaters" },
 ];
 
-const API_KEY = "348088421ad3fb3a9d6e56bb6a9a8f80";
+const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 const Popular: React.FC = () => {
   const { darkMode } = useTheme(); // 🌙 dark mode
