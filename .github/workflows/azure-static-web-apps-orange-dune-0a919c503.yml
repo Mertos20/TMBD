@@ -28,7 +28,7 @@ jobs:
           npm ci
           npm run build
         env:
-          VITE_API_URL: "https://webb-mb.azurewebsites.net"
+          VITE_API_URL: "https://webb-mb-hbd5feanavdwdyfp.swedencentral-01.azurewebsites.net"
 
       - name: Deploy to Azure Static Web Apps
         id: builddeploy
