@@ -20,10 +20,16 @@ jobs:
         with:
           node-version: '22.x'
 
+      - name: Install production dependencies & zip package
+        run: |
+          cd backend
+          npm install --omit=dev
+          zip -r ../release.zip .
+
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
           app-name: 'webb-mb'
-          package: './backend'
+          package: 'release.zip'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F96813BA56824BE8B50DBB87D040F32B }}
