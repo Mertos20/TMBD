@@ -24,6 +24,6 @@ jobs:
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'webb-mb'
+          app-name: 'webb-mb-hbd5feanavdwdyfp'
           package: './backend'
           publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F96813BA56824BE8B50DBB87D040F32B }}
