@@ -32,6 +32,8 @@ jobs:
           app_location: "/"
           api_location: ""
           output_location: "dist"
+        env:
+          VITE_API_URL: "https://webb-mb.azurewebsites.net"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'

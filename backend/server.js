@@ -66,6 +66,11 @@ mongoose.connect(process.env.MONGO_URI)
   .catch(err => console.error("❌ MongoDB connection error:", err));
 
 
+// Health Check Endpoint for Azure App Service & Ping
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ status: "OK", timestamp: new Date(), service: "movibase-api" });
+});
+
 app.use("/api/auth", authRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/favorites", favoriteRoutes);
