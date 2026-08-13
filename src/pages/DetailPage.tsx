@@ -498,7 +498,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
     const left = window.screen.width / 2 - width / 2;
     const top = window.screen.height / 2 - height / 2;
 
-    const loginUrl = " https://latanya-juicier-lanelle.ngrok-free.dev/spotify/login";
+    const loginUrl = `${API_URL}/spotify/login`;
 
     const popup = window.open(
       loginUrl,
@@ -521,9 +521,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
 
     // ✔ popup’tan token mesajını dinle
     const receiveToken = async (e: MessageEvent) => {
-      if (!e.origin.includes("ngrok-free.dev")) return;
-
-      const { access_token } = e.data;
+      const { access_token } = e.data || {};
       if (access_token) {
         localStorage.setItem("spotify_access_token", access_token);
 
@@ -592,7 +590,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
             headers["Authorization"] = `Bearer ${appToken}`;
           }
 
-          const res = await fetch("https://latanya-juicier-lanelle.ngrok-free.dev/api/vibe", {
+          const res = await fetch(`${API_URL}/api/vibe`, {
             method: "POST",
             headers: headers,
             body: JSON.stringify({
@@ -609,7 +607,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
             return;
           }
 
-          const playlistRes = await fetch(" https://latanya-juicier-lanelle.ngrok-free.dev/spotify/create-playlist", {
+          const playlistRes = await fetch(`${API_URL}/spotify/create-playlist`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({
