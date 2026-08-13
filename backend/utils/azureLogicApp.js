@@ -11,13 +11,14 @@ const LOGIC_APP_WEBHOOK_URL = process.env.AZURE_LOGIC_APP_WEBHOOK_URL;
  * @returns {Promise<boolean>} İşlem başarılı ise true
  */
 export async function triggerLogicApp(payload = {}) {
-  if (!LOGIC_APP_WEBHOOK_URL) {
+  const webhookUrl = process.env.AZURE_LOGIC_APP_WEBHOOK_URL;
+  if (!webhookUrl) {
     console.warn("⚠️ AZURE_LOGIC_APP_WEBHOOK_URL ortam değişkenlerinde tanımlı değil.");
     return false;
   }
 
   try {
-    const response = await fetch(LOGIC_APP_WEBHOOK_URL, {
+    const response = await fetch(webhookUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload)
