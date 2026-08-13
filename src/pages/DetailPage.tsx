@@ -376,7 +376,7 @@ const DetailPage: React.FC<DetailPageProps> = ({ id, type }) => {
       const res = await fetch(`${API_URL}/api/comments`, {
         method: "POST",
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token || ""}` },
-        body: JSON.stringify({ movieId: id, media_type: mediaType, comment: newComment }),
+        body: JSON.stringify({ movieId: id, media_type: type, comment: newComment }),
       });
       if (res.ok) {
         setNewComment("");
