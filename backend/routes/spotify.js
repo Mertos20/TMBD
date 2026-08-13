@@ -3,10 +3,18 @@ import fetch from "node-fetch";
 
 const router = express.Router();
 
+const getRedirectUri = () => {
+  const uri = process.env.SPOTIFY_REDIRECT_URI;
+  if (!uri || uri.includes("ngrok-free.dev")) {
+    return "https://webb-mb-hbd5feanavdwdyfp.swedencentral-01.azurewebsites.net/spotify/callback";
+  }
+  return uri;
+};
+
 // 1️⃣ Spotify login yönlendirmesi
 router.get("/login", (req, res) => {
   const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
-  const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI;
+  const REDIRECT_URI = getRedirectUri();
   const SCOPES = "playlist-modify-private";
 
   const url = `https://accounts.spotify.com/authorize?client_id=${CLIENT_ID}&response_type=code&redirect_uri=${encodeURIComponent(
@@ -23,7 +31,7 @@ router.get("/callback", async (req, res) => {
 
   const CLIENT_ID = process.env.SPOTIFY_CLIENT_ID;
   const CLIENT_SECRET = process.env.SPOTIFY_CLIENT_SECRET;
-  const REDIRECT_URI = process.env.SPOTIFY_REDIRECT_URI;
+  const REDIRECT_URI = getRedirectUri();
 
   const body = new URLSearchParams({
     grant_type: "authorization_code",
