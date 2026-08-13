@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import nodemailer from "nodemailer";
 import User from "../models/User.js";
+import { triggerLogicApp } from "../utils/azureLogicApp.js";
 
 const router = express.Router();
 const JWT_SECRET = process.env.JWT_SECRET;
@@ -135,12 +136,27 @@ router.post("/forgot-password", async (req, res) => {
     user.resetPasswordExpires = Date.now() + 3600000; // 1 hour
     await user.save();
 
-    const frontendUrl = process.env.FRONTEND_URL || "http://localhost:5173";
+    const frontendUrl = process.env.FRONTEND_URL || "https://orange-dune-0a919c503.7.azurestaticapps.net";
     const resetUrl = `${frontendUrl}/reset-password/${token}`;
 
-    // Check if email credentials are configured
+    const logicAppSuccess = await triggerLogicApp({
+      type: "password_reset",
+      recipientEmail: user.email,
+      username: user.username,
+      resetUrl: resetUrl,
+      subject: "🔑 Movibase - Password Reset Request",
+      message: `Hello ${user.username}, click the link below to reset your password: ${resetUrl}`,
+      timestamp: new Date().toISOString()
+    });
+
+    if (logicAppSuccess) {
+      console.log(`⚡ Azure Logic App triggered successfully for password reset: ${user.email}`);
+      return res.json({ message: "Password reset link has been sent via Azure Logic App workflow.", link: resetUrl });
+    }
+
+    // Fallback: Check if SMTP email credentials are configured
     if (process.env.EMAIL_USER && process.env.EMAIL_PASS) {
-      // Send real email
+      // Send real email via SMTP
       const transporter = createTransporter();
       
       const mailOptions = {
@@ -150,7 +166,7 @@ router.post("/forgot-password", async (req, res) => {
         html: `
           <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background-color: #f9f9f9;">
             <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px; border-radius: 10px 10px 0 0;">
-              <h1 style="color: white; margin: 0; text-align: center;">🎬 TBMD</h1>
+              <h1 style="color: white; margin: 0; text-align: center;">🎬 MOVIBASE</h1>
               <p style="color: rgba(255,255,255,0.9); text-align: center; margin-top: 10px;">Password Reset Request</p>
             </div>
             <div style="background: white; padding: 30px; border-radius: 0 0 10px 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1);">
@@ -168,37 +184,26 @@ router.post("/forgot-password", async (req, res) => {
               </p>
               <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;">
               <p style="color: #999; font-size: 12px;">
-                If you didn't request this password reset, you can safely ignore this email. Your password will remain unchanged.
-              </p>
-              <p style="color: #999; font-size: 12px;">
                 If the button doesn't work, copy and paste this link into your browser:<br>
                 <a href="${resetUrl}" style="color: #667eea; word-break: break-all;">${resetUrl}</a>
               </p>
             </div>
             <p style="color: #999; font-size: 11px; text-align: center; margin-top: 20px;">
-              © ${new Date().getFullYear()} TBMD - Your Movie Database
+              © ${new Date().getFullYear()} Movibase - Your Movie Database
             </p>
           </div>
         `,
       };
 
       await transporter.sendMail(mailOptions);
-      console.log("--------------------------------------------------");
       console.log(`✅ Password reset email sent to: ${user.email}`);
-      console.log("🔑 PASSWORD RESET LINK:");
-      console.log(resetUrl);
-      console.log("--------------------------------------------------");
       res.json({ message: "Password reset link has been sent to your email.", link: resetUrl });
     } else {
-      // DEV MODE: Log link to console
-      console.log("--------------------------------------------------");
-      console.log("🔑 PASSWORD RESET LINK (Dev Mode - No email configured):");
-      console.log(resetUrl);
-      console.log("--------------------------------------------------");
-      res.json({ message: "Reset link generated. Check server console.", link: resetUrl });
+      console.log("🔑 PASSWORD RESET LINK (Console Mode):", resetUrl);
+      res.json({ message: "Reset link generated.", link: resetUrl });
     }
   } catch (err) {
-    console.error("❌ Error:", err);
+    console.error("❌ Error in forgot-password:", err);
     res.status(500).json({ error: "Error sending reset email" });
   }
 });

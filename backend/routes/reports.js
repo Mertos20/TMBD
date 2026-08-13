@@ -4,6 +4,7 @@ import Report from "../models/Report.js";
 import Comment from "../models/Comment.js";
 import User from "../models/User.js";
 import Notification from "../models/Notification.js";
+import { triggerLogicApp } from "../utils/azureLogicApp.js";
 
 const router = express.Router();
 
@@ -39,7 +40,7 @@ router.post("/", async (req, res) => {
 
     await report.save();
 
-    // Send notification to all admin users
+    // Send notification to all admin users & trigger Logic App
     const admins = await User.find({ isAdmin: true });
     for (const admin of admins) {
       const notification = new Notification({
@@ -49,6 +50,15 @@ router.post("/", async (req, res) => {
         message: `New comment reported on "${movieTitle}"`
       });
       await notification.save();
+
+      triggerLogicApp({
+        type: "admin_report_alert",
+        adminEmail: admin.email,
+        movieTitle,
+        commentText,
+        reportedBy: decoded.id,
+        timestamp: new Date().toISOString()
+      });
     }
 
     res.status(201).json({ message: "Report submitted successfully" });
