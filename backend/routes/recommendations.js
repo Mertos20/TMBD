@@ -25,6 +25,10 @@ const optionalVerifyToken = (req, res, next) => {
   });
 };
 
+// In-memory backend cache for recommendations
+const recommendationCache = new Map();
+const CACHE_TTL_MS = 12 * 60 * 60 * 1000; // 12 Hours
+
 /**
  * POST /api/recommendations/ai
  * AI-powered recommendation endpoint using Azure AI Foundry
@@ -32,7 +36,7 @@ const optionalVerifyToken = (req, res, next) => {
 router.post("/ai", optionalVerifyToken, async (req, res) => {
   try {
     const userId = req.user?.id;
-    const { recentViews = [] } = req.body || {};
+    const { recentViews = [], forceRefresh = false } = req.body || {};
 
     let userFavorites = [];
     let userWatchlist = [];
@@ -50,6 +54,23 @@ router.post("/ai", optionalVerifyToken, async (req, res) => {
       userWatchlist = watch;
       userRatings = rates;
       userComments = comments;
+    }
+
+    // Build action fingerprint hash
+    const fingerprint = `${userId || "guest"}_${userFavorites.length}_${userWatchlist.length}_${
+      userRatings.length
+    }_${recentViews.length}`;
+
+    // Check backend cache unless forced refresh
+    if (!forceRefresh && recommendationCache.has(fingerprint)) {
+      const cached = recommendationCache.get(fingerprint);
+      if (Date.now() - cached.timestamp < CACHE_TTL_MS) {
+        return res.json({
+          userProfileSummary: cached.userProfileSummary,
+          recommendations: cached.recommendations,
+          fromCache: true,
+        });
+      }
     }
 
     // Build comprehensive user behavior profile for Azure AI Foundry
@@ -94,50 +115,56 @@ Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do 
       console.warn("⚠️ Azure AI Foundry recommendation call fallback:", aiError.message);
     }
 
-    // Enrich recommendations with TMDB API metadata
-    const finalRecommendations = [];
     const knownTitles = new Set([
       ...userFavorites.map((f) => (f.title || f.name || "").toLowerCase()),
       ...userWatchlist.map((w) => (w.title || w.name || "").toLowerCase()),
     ]);
 
+    // Parallelize TMDB Metadata Resolution for high performance (~150ms)
+    let finalRecommendations = [];
     if (aiResult?.recommendations && Array.isArray(aiResult.recommendations)) {
-      for (const rec of aiResult.recommendations) {
-        if (!rec.title || knownTitles.has(rec.title.toLowerCase())) continue;
+      const searchPromises = aiResult.recommendations.map(async (rec) => {
+        if (!rec.title || knownTitles.has(rec.title.toLowerCase())) return null;
 
         try {
           const type = rec.media_type === "tv" ? "tv" : "movie";
           const searchUrl = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
             rec.title
-          )}&language=tr-TR`;
+          )}&language=en-US`;
 
           const searchRes = await fetch(searchUrl);
           const searchData = await searchRes.json();
 
           if (searchData.results && searchData.results.length > 0) {
             const tmdbItem = searchData.results[0];
-            finalRecommendations.push({
+            return {
               id: tmdbItem.id,
               title: tmdbItem.title || tmdbItem.name,
               poster_path: tmdbItem.poster_path,
               backdrop_path: tmdbItem.backdrop_path,
               vote_average: tmdbItem.vote_average,
+              release_date: tmdbItem.release_date,
+              first_air_date: tmdbItem.first_air_date,
               media_type: type,
               aiReason: rec.reason || "Kullanıcı tercihlerine ve izleme geçmişine göre önerildi.",
               matchPercentage: rec.matchPercentage || 92,
-            });
+            };
           }
         } catch (e) {
           console.error("Error resolving TMDB metadata for AI rec:", rec.title, e);
         }
-      }
+        return null;
+      });
+
+      const resolvedResults = await Promise.all(searchPromises);
+      finalRecommendations = resolvedResults.filter(Boolean);
     }
 
     // Fallback if AI recommendations were empty or failed
     if (finalRecommendations.length < 5) {
       try {
         const popRes = await fetch(
-          `https://api.themoviedb.org/3/trending/all/day?api_key=${TMDB_API_KEY}&language=tr-TR`
+          `https://api.themoviedb.org/3/trending/all/day?api_key=${TMDB_API_KEY}&language=en-US`
         );
         const popData = await popRes.json();
         const fallbackItems = (popData.results || []).map((it) => ({
@@ -146,6 +173,8 @@ Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do 
           poster_path: it.poster_path,
           backdrop_path: it.backdrop_path,
           vote_average: it.vote_average,
+          release_date: it.release_date,
+          first_air_date: it.first_air_date,
           media_type: it.media_type || "movie",
           aiReason: "Günün en çok tercih edilen popüler yapımları arasından önerildi.",
           matchPercentage: 88,
@@ -162,12 +191,20 @@ Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do 
       }
     }
 
-    res.json({
+    const payload = {
       userProfileSummary:
         aiResult?.userProfileSummary ||
         "İzleme geçmişiniz ve tercihleriniz doğrultusunda hazırlanan kişiselleştirilmiş AI önerileri.",
       recommendations: finalRecommendations.slice(0, 10),
+    };
+
+    // Save to backend cache
+    recommendationCache.set(fingerprint, {
+      ...payload,
+      timestamp: Date.now(),
     });
+
+    res.json(payload);
   } catch (err) {
     console.error("AI Recommendation Router Error:", err);
     res.status(500).json({ error: "Failed to generate AI recommendations" });

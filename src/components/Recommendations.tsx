@@ -1,9 +1,8 @@
-import React, { useEffect, useState, useLayoutEffect, useMemo, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "react";
+import MovieCard from "./MovieCard";
 import { Link } from "react-router-dom";
 import { useTheme } from "./ThemaContext";
 import { API_URL } from "../config/api";
-const IMAGE_BASE = "https://image.tmdb.org/t/p/w200";
-const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 interface TMDBItem {
   id: number;
@@ -14,17 +13,13 @@ interface TMDBItem {
   poster_path: string | null;
   vote_average: number | null;
   media_type?: "movie" | "tv";
-  genre_ids?: number[];
-  aiReason?: string;
-  matchPercentage?: number;
 }
 
-const BAND_HEIGHT = 320;
+const BAND_HEIGHT = 300;
 
 const Recommendations: React.FC = () => {
   const { darkMode } = useTheme();
   const [items, setItems] = useState<TMDBItem[]>([]);
-  const [userSummary, setUserSummary] = useState<string>("");
   const listRef = useRef<HTMLUListElement>(null);
   const [bandWidth, setBandWidth] = useState(0);
   const [barsTop, setBarsTop] = useState(0);
@@ -32,15 +27,37 @@ const Recommendations: React.FC = () => {
 
   useEffect(() => {
     const buildRecommendations = async () => {
+      const token = localStorage.getItem("token");
+      const userId = localStorage.getItem("userId");
+      const recentViewsStr = localStorage.getItem("recentViews") || "[]";
+      let recentViews = [];
+      try {
+        recentViews = JSON.parse(recentViewsStr);
+      } catch {}
+
+      const cacheKey = `ai_rec_cache_${userId || "guest"}`;
+      const cacheFingerprintKey = `ai_rec_fingerprint_${userId || "guest"}`;
+      const currentFingerprint = `${token || ""}_${recentViews.length}`;
+
+      // Check client-side localStorage cache for 0ms Instant Load on page refreshes!
+      const cachedDataStr = localStorage.getItem(cacheKey);
+      const cachedFingerprint = localStorage.getItem(cacheFingerprintKey);
+
+      if (cachedDataStr && cachedFingerprint === currentFingerprint) {
+        try {
+          const cached = JSON.parse(cachedDataStr);
+          if (cached && Array.isArray(cached.items) && cached.items.length > 0) {
+            setItems(cached.items);
+            setLoading(false);
+            return; // ⚡ Served instantly from cache, no network wait!
+          }
+        } catch (e) {
+          console.warn("Invalid recommendation cache:", e);
+        }
+      }
+
       setLoading(true);
       try {
-        const token = localStorage.getItem("token");
-        const recentViewsStr = localStorage.getItem("recentViews") || "[]";
-        let recentViews = [];
-        try {
-          recentViews = JSON.parse(recentViewsStr);
-        } catch {}
-
         const headers: Record<string, string> = { "Content-Type": "application/json" };
         if (token) {
           headers["Authorization"] = `Bearer ${token}`;
@@ -54,8 +71,12 @@ const Recommendations: React.FC = () => {
 
         if (res.ok) {
           const data = await res.json();
-          setUserSummary(data.userProfileSummary || "");
-          setItems(data.recommendations || []);
+          const recs = data.recommendations || [];
+          setItems(recs);
+
+          // Save to client cache
+          localStorage.setItem(cacheKey, JSON.stringify({ items: recs, time: Date.now() }));
+          localStorage.setItem(cacheFingerprintKey, currentFingerprint);
         } else {
           console.error("AI Recommendation endpoint failed:", res.status);
         }
@@ -72,7 +93,6 @@ const Recommendations: React.FC = () => {
   const consent = localStorage.getItem("cookieConsent");
   if (consent !== "true") return null;
 
-  // Yeşil bar yüksekliği hesapla
   useLayoutEffect(() => {
     const calc = () => {
       if (!listRef.current) return;
@@ -93,29 +113,17 @@ const Recommendations: React.FC = () => {
   }, [items]);
 
   return (
-    <section className="w-full md:w-[1528px] flex justify-center mt-8">
-      <div className="pt-6 md:pt-[30px] w-full md:w-[1300px] px-4 md:px-0">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xl">✨</span>
-              <h2
-                className={`font-sans text-xl md:text-[24px] leading-[24px] font-bold ${
-                  darkMode ? "text-white" : "text-black"
-                }`}
-              >
-                AI Recommended For You
-              </h2>
-              <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full tracking-wider animate-pulse">
-                Foundry Powered
-              </span>
-            </div>
-            {userSummary && (
-              <p className="text-xs text-[#1DB954] mt-1 font-mono flex items-center gap-1">
-                <span>🤖 Profil Analizi:</span> {userSummary}
-              </p>
-            )}
-          </div>
+    <section className="w-full md:w-[1528px] flex justify-center">
+      <div className="pt-6 md:pt-[30px] w-full md:w-[1300px]">
+        {/* Başlık */}
+        <div className="flex items-center px-4 md:px-10 h-auto md:h-[29.6px]">
+          <h2
+            className={`font-sans text-xl md:text-[24px] leading-[24px] font-semibold ${
+              darkMode ? "text-white" : "text-black"
+            }`}
+          >
+            Recommendations for you
+          </h2>
         </div>
 
         <div className="relative mt-6 overflow-visible">
@@ -129,57 +137,28 @@ const Recommendations: React.FC = () => {
 
           <ul
             ref={listRef}
-            className="relative z-[10] flex w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-0 md:ml-6 px-4 md:px-0 scrollbar-hide py-2"
+            className="relative z-[10] flex w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-0 md:ml-10 px-4 md:px-0 scrollbar-hide"
           >
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
                   <li
                     key={i}
-                    className={`w-[140px] md:w-[170px] h-[260px] shrink-0 animate-pulse rounded-2xl bg-slate-800/50 ${
+                    className={`w-[120px] h-[180px] md:w-auto md:h-auto shrink-0 animate-pulse rounded-xl bg-slate-200 ${
                       i !== 0 ? "ml-3 md:ml-5" : ""
                     }`}
                   />
                 ))
               : items.map((item, i) => (
-                  <li
-                    key={item.id}
-                    className={`shrink-0 snap-start ${i !== 0 ? "ml-3 md:ml-5" : ""}`}
-                  >
+                  <li key={item.id} className={`shrink-0 snap-start ${i !== 0 ? "ml-3 md:ml-5" : ""}`}>
                     <Link to={`/${item.media_type || (item.name ? "tv" : "movie")}/${item.id}`}>
-                      <div
-                        data-poster
-                        className="w-[140px] md:w-[170px] flex flex-col items-center group relative"
-                      >
-                        <div className="relative overflow-hidden rounded-xl shadow-lg group-hover:shadow-2xl transition duration-300 transform group-hover:-translate-y-1">
-                          {item.poster_path ? (
-                            <img
-                              src={`${IMAGE_BASE}${item.poster_path}`}
-                              alt={item.title || item.name}
-                              className="w-[140px] md:w-[170px] h-[210px] object-cover rounded-xl"
-                            />
-                          ) : (
-                            <div className="w-[140px] md:w-[170px] h-[210px] bg-neutral-800 rounded-xl flex items-center justify-center text-xs text-neutral-400">
-                              Görsel Yok
-                            </div>
-                          )}
-
-                          {item.matchPercentage && (
-                            <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md border border-[#1DB954]/50 text-[#1DB954] text-[10px] font-bold px-2 py-0.5 rounded-full font-mono shadow-md">
-                              %{item.matchPercentage} Uyum
-                            </div>
-                          )}
-                        </div>
-
-                        <p className="mt-2 text-sm font-semibold text-center truncate w-full px-1">
-                          {item.title || item.name}
-                        </p>
-
-                        {item.aiReason && (
-                          <p className="text-[10px] text-gray-400 text-center line-clamp-2 mt-0.5 px-1 italic">
-                            "{item.aiReason}"
-                          </p>
-                        )}
-                      </div>
+                      <MovieCard
+                        posterPath={item.poster_path}
+                        id={item.id}
+                        title={item.title || item.name || ""}
+                        date={item.release_date || item.first_air_date || ""}
+                        vote={item.vote_average}
+                        type={(item.media_type as "movie" | "tv") || "movie"}
+                      />
                     </Link>
                   </li>
                 ))}
@@ -192,7 +171,19 @@ const Recommendations: React.FC = () => {
 
 export default Recommendations;
 
-function BackgroundBars({ width, top, height, className = "", darkMode }: { width: number; top: number; height: number; className?: string; darkMode: boolean }) {
+function BackgroundBars({
+  width,
+  top,
+  height,
+  className = "",
+  darkMode,
+}: {
+  width: number;
+  top: number;
+  height: number;
+  className?: string;
+  darkMode: boolean;
+}) {
   const barWidth = 4;
   const gap = 5;
 
@@ -218,8 +209,10 @@ function BackgroundBars({ width, top, height, className = "", darkMode }: { widt
         width,
         height,
         overflow: "hidden",
-        WebkitMaskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
-        maskImage: "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
+        WebkitMaskImage:
+          "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
+        maskImage:
+          "linear-gradient(to bottom, rgba(0,0,0,1) 0%, rgba(0,0,0,0.3) 80%, rgba(0,0,0,0) 100%)",
       }}
     >
       {bars.map((h, i) => (
