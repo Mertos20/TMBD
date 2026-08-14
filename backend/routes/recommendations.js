@@ -2,160 +2,191 @@ import express from "express";
 import fetch from "node-fetch";
 import Favorite from "../models/Favorite.js";
 import WatchList from "../models/WatchList.js";
+import Rating from "../models/Rating.js";
+import Comment from "../models/Comment.js";
 import jwt from "jsonwebtoken";
+import { generateAIText } from "../utils/aiFoundry.js";
 
 const router = express.Router();
 const TMDB_API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
-const verifyToken = (req, res, next) => {
+const optionalVerifyToken = (req, res, next) => {
   const authHeader = req.headers.authorization;
-  if (!authHeader) return res.status(401).json({ error: "No token provided" });
+  if (!authHeader) return next();
 
   const token = authHeader.split(" ")[1]?.trim();
-  if (!token) return res.status(401).json({ error: "Token format incorrect" });
+  if (!token) return next();
 
   jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
-    if (err) return res.status(401).json({ error: "Invalid token" });
-    req.user = decoded;
+    if (!err && decoded) {
+      req.user = decoded;
+    }
     next();
   });
 };
 
-router.get("/:userId", verifyToken, async (req, res) => {
+/**
+ * POST /api/recommendations/ai
+ * AI-powered recommendation endpoint using Azure AI Foundry
+ */
+router.post("/ai", optionalVerifyToken, async (req, res) => {
   try {
-    const { userId } = req.params;
-    if (req.user.id !== userId) return res.status(403).json({ error: "Unauthorized" });
+    const userId = req.user?.id;
+    const { recentViews = [] } = req.body || {};
 
-    // 1. Fetch User Data
-    const [favorites, watchlist] = await Promise.all([
-      Favorite.find({ userId }),
-      WatchList.find({ userId }),
+    let userFavorites = [];
+    let userWatchlist = [];
+    let userRatings = [];
+    let userComments = [];
+
+    if (userId) {
+      const [favs, watch, rates, comments] = await Promise.all([
+        Favorite.find({ userId }).limit(15),
+        WatchList.find({ userId }).limit(15),
+        Rating.find({ userId }).limit(15),
+        Comment.find({ userId }).limit(10),
+      ]);
+      userFavorites = favs;
+      userWatchlist = watch;
+      userRatings = rates;
+      userComments = comments;
+    }
+
+    // Build comprehensive user behavior profile for Azure AI Foundry
+    const profileText = `
+User Profile & Behavior Analysis:
+- Favorited Movies/Shows: ${userFavorites.map((f) => f.title || f.name).join(", ") || "None"}
+- Watchlist Items: ${userWatchlist.map((w) => w.title || w.name).join(", ") || "None"}
+- User High Ratings: ${userRatings.map((r) => `Movie ID ${r.movieId} Rated ${r.rating}/5`).join(", ") || "None"}
+- User Comments/Thoughts: ${userComments.map((c) => `"${c.comment}"`).join("; ") || "None"}
+- Recent Cookie / Browsing History: ${recentViews.map((v) => v.title || v.name || v).join(", ") || "None"}
+`;
+
+    const systemPrompt = `You are Movibase AI Engine, an expert film curator and personalized recommendation agent.
+Analyze the user's explicit behavior (favorites, watchlist, high ratings, comments) and implicit cookie browsing history.
+You MUST act as a recommendation instruction tool and output a strictly valid JSON object matching this schema:
+
+{
+  "userProfileSummary": "A concise 1-sentence Turkish summary of the user's cinematic taste and current mood.",
+  "recommendations": [
+    {
+      "title": "Exact Title of Recommended Movie or TV Show",
+      "media_type": "movie" or "tv",
+      "reason": "Clear 1-sentence Turkish reason explaining why this is recommended based on user's exact preferences/recent views.",
+      "matchPercentage": 95
+    }
+  ]
+}
+
+Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do NOT repeat items from their favorites list. Output ONLY the JSON object.`;
+
+    let aiResult = null;
+    try {
+      const aiResponseText = await generateAIText({
+        prompt: profileText,
+        systemPrompt,
+        temperature: 0.7,
+        jsonMode: true,
+      });
+
+      aiResult = JSON.parse(aiResponseText);
+    } catch (aiError) {
+      console.warn("⚠️ Azure AI Foundry recommendation call fallback:", aiError.message);
+    }
+
+    // Enrich recommendations with TMDB API metadata
+    const finalRecommendations = [];
+    const knownTitles = new Set([
+      ...userFavorites.map((f) => (f.title || f.name || "").toLowerCase()),
+      ...userWatchlist.map((w) => (w.title || w.name || "").toLowerCase()),
     ]);
 
-    const allItems = [...favorites, ...watchlist];
-    const knownIds = new Set(allItems.map((i) => i.movieId));
+    if (aiResult?.recommendations && Array.isArray(aiResult.recommendations)) {
+      for (const rec of aiResult.recommendations) {
+        if (!rec.title || knownTitles.has(rec.title.toLowerCase())) continue;
 
-    // If no data, return popular movies
-    if (allItems.length === 0) {
-      const popRes = await fetch(`https://api.themoviedb.org/3/movie/popular?api_key=${TMDB_API_KEY}`);
-      const popData = await popRes.json();
-      return res.json(popData.results || []);
-    }
-
-    // 2. Analyze User Preferences (Last 10 items for relevance)
-    const recentItems = allItems.slice(-10);
-    const genreCounts = {};
-    const actorCounts = {};
-    const langCounts = {};
-    const years = [];
-
-    // Fetch details for analysis
-    await Promise.all(
-      recentItems.map(async (item) => {
         try {
-          const type = item.media_type || "movie";
-          const detailRes = await fetch(
-            `https://api.themoviedb.org/3/${type}/${item.movieId}?api_key=${TMDB_API_KEY}&append_to_response=credits`
-          );
-          const data = await detailRes.json();
+          const type = rec.media_type === "tv" ? "tv" : "movie";
+          const searchUrl = `https://api.themoviedb.org/3/search/${type}?api_key=${TMDB_API_KEY}&query=${encodeURIComponent(
+            rec.title
+          )}&language=tr-TR`;
 
-          // Genres
-          data.genres?.forEach((g) => {
-            genreCounts[g.id] = (genreCounts[g.id] || 0) + 1;
-          });
+          const searchRes = await fetch(searchUrl);
+          const searchData = await searchRes.json();
 
-          // Cast (Top 5 billed)
-          data.credits?.cast?.slice(0, 5).forEach((c) => {
-            actorCounts[c.id] = (actorCounts[c.id] || 0) + 1;
-          });
-
-          // Language
-          if (data.original_language) {
-            langCounts[data.original_language] = (langCounts[data.original_language] || 0) + 1;
+          if (searchData.results && searchData.results.length > 0) {
+            const tmdbItem = searchData.results[0];
+            finalRecommendations.push({
+              id: tmdbItem.id,
+              title: tmdbItem.title || tmdbItem.name,
+              poster_path: tmdbItem.poster_path,
+              backdrop_path: tmdbItem.backdrop_path,
+              vote_average: tmdbItem.vote_average,
+              media_type: type,
+              aiReason: rec.reason || "Kullanıcı tercihlerine ve izleme geçmişine göre önerildi.",
+              matchPercentage: rec.matchPercentage || 92,
+            });
           }
-
-          // Year
-          const date = data.release_date || data.first_air_date;
-          if (date) years.push(parseInt(date.split("-")[0]));
         } catch (e) {
-          console.error("Error fetching details for analysis:", e);
+          console.error("Error resolving TMDB metadata for AI rec:", rec.title, e);
         }
-      })
-    );
-
-    // Determine Top Preferences
-    const topGenres = Object.entries(genreCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([id]) => id)
-      .join(","); // e.g., "28,12,878"
-
-    const topActors = Object.entries(actorCounts)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([id]) => id)
-      .join(","); // e.g., "123,456"
-
-    const topLang = Object.entries(langCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || 'en';
-
-    const avgYear = years.length > 0 ? Math.round(years.reduce((a, b) => a + b, 0) / years.length) : null;
-
-    // 3. Fetch Recommendations based on criteria
-    const queries = [];
-
-    // Strategy A: Based on Genres + Year
-    if (topGenres && avgYear) {
-      queries.push(
-        fetch(
-          `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${topGenres}&primary_release_date.gte=${avgYear - 5}-01-01&primary_release_date.lte=${avgYear + 5}-12-31&with_original_language=${topLang}&sort_by=popularity.desc`
-        )
-      );
-    }
-
-    // Strategy B: Based on Actors
-    if (topActors) {
-      queries.push(
-        fetch(
-          `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&with_cast=${topActors}&with_original_language=${topLang}&sort_by=popularity.desc`
-        )
-      );
-    }
-
-    // Strategy C: Just Top Genres (Fallback)
-    if (topGenres) {
-      queries.push(
-        fetch(
-          `https://api.themoviedb.org/3/discover/movie?api_key=${TMDB_API_KEY}&with_genres=${topGenres}&with_original_language=${topLang}&sort_by=popularity.desc`
-        )
-      );
-    }
-
-    const responses = await Promise.all(queries);
-    const results = await Promise.all(responses.map((r) => r.json()));
-
-    // 4. Merge and Filter
-    const candidates = [];
-    results.forEach((data) => {
-      if (data.results) candidates.push(...data.results);
-    });
-
-    // Deduplicate and remove watched
-    const uniqueRecommendations = [];
-    const seenIds = new Set(knownIds);
-
-    for (const movie of candidates) {
-      if (!seenIds.has(movie.id)) {
-        uniqueRecommendations.push(movie);
-        seenIds.add(movie.id);
       }
     }
 
-    // Shuffle slightly to give variety or just take top 20
-    res.json(uniqueRecommendations.slice(0, 20));
+    // Fallback if AI recommendations were empty or failed
+    if (finalRecommendations.length < 5) {
+      try {
+        const popRes = await fetch(
+          `https://api.themoviedb.org/3/trending/all/day?api_key=${TMDB_API_KEY}&language=tr-TR`
+        );
+        const popData = await popRes.json();
+        const fallbackItems = (popData.results || []).map((it) => ({
+          id: it.id,
+          title: it.title || it.name,
+          poster_path: it.poster_path,
+          backdrop_path: it.backdrop_path,
+          vote_average: it.vote_average,
+          media_type: it.media_type || "movie",
+          aiReason: "Günün en çok tercih edilen popüler yapımları arasından önerildi.",
+          matchPercentage: 88,
+        }));
 
+        for (const fb of fallbackItems) {
+          if (!finalRecommendations.find((r) => r.id === fb.id)) {
+            finalRecommendations.push(fb);
+          }
+          if (finalRecommendations.length >= 10) break;
+        }
+      } catch (err) {
+        console.error("Fallback fetch failed:", err);
+      }
+    }
+
+    res.json({
+      userProfileSummary:
+        aiResult?.userProfileSummary ||
+        "İzleme geçmişiniz ve tercihleriniz doğrultusunda hazırlanan kişiselleştirilmiş AI önerileri.",
+      recommendations: finalRecommendations.slice(0, 10),
+    });
   } catch (err) {
-    console.error("Recommendation Error:", err);
-    res.status(500).json({ error: "Failed to generate recommendations" });
+    console.error("AI Recommendation Router Error:", err);
+    res.status(500).json({ error: "Failed to generate AI recommendations" });
+  }
+});
+
+/**
+ * GET /api/recommendations/:userId
+ * Compatibility endpoint
+ */
+router.get("/:userId", optionalVerifyToken, async (req, res) => {
+  try {
+    const popRes = await fetch(
+      `https://api.themoviedb.org/3/trending/all/day?api_key=${TMDB_API_KEY}&language=tr-TR`
+    );
+    const popData = await popRes.json();
+    res.json((popData.results || []).slice(0, 10));
+  } catch (err) {
+    res.status(500).json({ error: "Failed to fetch recommendations" });
   }
 });
 

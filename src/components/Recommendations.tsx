@@ -15,200 +15,52 @@ interface TMDBItem {
   vote_average: number | null;
   media_type?: "movie" | "tv";
   genre_ids?: number[];
+  aiReason?: string;
+  matchPercentage?: number;
 }
 
-interface Favorite {
-  _id: string;
-  movieId: number;
-  media_type?: "movie" | "tv";
-  poster_path: string;
-  title?: string;
-  name?: string;
-  genre_ids?: number[];
-}
-
-interface Watchlist {
-  _id: string;
-  movieId: number;
-  media_type?: "movie" | "tv";
-  poster_path: string;
-  title?: string;
-  name?: string;
-  genre_ids?: number[];
-}
-
-const BAND_HEIGHT = 300;
+const BAND_HEIGHT = 320;
 
 const Recommendations: React.FC = () => {
   const { darkMode } = useTheme();
   const [items, setItems] = useState<TMDBItem[]>([]);
+  const [userSummary, setUserSummary] = useState<string>("");
   const listRef = useRef<HTMLUListElement>(null);
   const [bandWidth, setBandWidth] = useState(0);
   const [barsTop, setBarsTop] = useState(0);
   const [loading, setLoading] = useState(true);
 
-  // Favorites ve Watchlist backend’den çek
-  const fetchUserData = async () => {
-    try {
-      const token = localStorage.getItem("token");
-      const userId = localStorage.getItem("userId");
-      if (!token || !userId) return { favorites: [] as Favorite[], watchlist: [] as Watchlist[], ratings: [] as any[] };
-
-      const [favRes, watchRes, ratingsRes] = await Promise.all([
-        fetch(`${API_URL}/api/favorites`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/api/watchlists`, { headers: { Authorization: `Bearer ${token}` } }),
-        fetch(`${API_URL}/api/ratings/user/${userId}`, { headers: { Authorization: `Bearer ${token}` } }),
-      ]);
-
-      const favorites: Favorite[] = await favRes.json();
-      const watchlist: Watchlist[] = await watchRes.json();
-      const ratings: any[] = await ratingsRes.json();
-      return { favorites, watchlist, ratings };
-    } catch (err) {
-      console.error(err);
-      return { favorites: [], watchlist: [], ratings: [] };
-    }
-  };
-
   useEffect(() => {
-    const consent = localStorage.getItem("cookieConsent");
-    if (consent !== "true") {
-      setLoading(false);
-      return;
-    }
-
     const buildRecommendations = async () => {
       setLoading(true);
       try {
         const token = localStorage.getItem("token");
-        const userId = localStorage.getItem("userId");
-        if (!token || !userId) {
-          setItems([]);
-          return;
+        const recentViewsStr = localStorage.getItem("recentViews") || "[]";
+        let recentViews = [];
+        try {
+          recentViews = JSON.parse(recentViewsStr);
+        } catch {}
+
+        const headers: Record<string, string> = { "Content-Type": "application/json" };
+        if (token) {
+          headers["Authorization"] = `Bearer ${token}`;
         }
 
-        const { favorites, watchlist } = await fetchUserData();
-        const all = [...favorites, ...watchlist];
-
-        const genreCount: Record<number, number> = {};
-        let movieCount = 0;
-        let tvCount = 0;
-        const years: number[] = [];
-
-        // Enrich with minimal TMDB data if missing
-        const enrichIfNeeded = async (item: Favorite | Watchlist) => {
-          const hasGenres = item.genre_ids && item.genre_ids.length > 0;
-          const hasYear = (item as any).release_date || (item as any).first_air_date;
-          if (hasGenres && hasYear) return item as any;
-          try {
-            const type = item.media_type || (item.name ? "tv" : "movie");
-            const res = await fetch(`https://api.themoviedb.org/3/${type}/${item.movieId}?api_key=${API_KEY}&language=en-US`);
-            const data = await res.json();
-            return {
-              ...item,
-              genre_ids: data.genres ? data.genres.map((g: any) => g.id) : item.genre_ids,
-              release_date: data.release_date,
-              first_air_date: data.first_air_date,
-            } as any;
-          } catch {
-            return item as any;
-          }
-        };
-
-        const enriched = await Promise.all(all.map(enrichIfNeeded));
-
-        enriched.forEach((it: any) => {
-          const type = it.media_type || (it.name ? "tv" : "movie");
-          if (type === "movie") movieCount++; else tvCount++;
-          (it.genre_ids || []).forEach((gid: number) => {
-            genreCount[gid] = (genreCount[gid] || 0) + 1;
-          });
-          const yStr = it.release_date || it.first_air_date;
-          if (typeof yStr === "string" && yStr.length >= 4) {
-            const y = parseInt(yStr.slice(0, 4));
-            if (!isNaN(y)) years.push(y);
-          }
+        const res = await fetch(`${API_URL}/api/recommendations/ai`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ recentViews }),
         });
 
-        const topGenres = Object.entries(genreCount)
-          .sort((a, b) => b[1] - a[1])
-          .slice(0, 3)
-          .map(([gid]) => gid)
-          .join(",");
-
-        let yearPref: number | undefined;
-        if (years.length) {
-          const sorted = years.slice().sort((a, b) => a - b);
-          yearPref = sorted[Math.floor(sorted.length / 2)];
+        if (res.ok) {
+          const data = await res.json();
+          setUserSummary(data.userProfileSummary || "");
+          setItems(data.recommendations || []);
+        } else {
+          console.error("AI Recommendation endpoint failed:", res.status);
         }
-
-        const excludedIds = new Set(enriched.map((it: any) => it.movieId));
-
-        const baseMovie = `https://api.themoviedb.org/3/discover/movie?api_key=${API_KEY}&language=en-US&sort_by=popularity.desc&vote_count.gte=50`;
-        const baseTV = `https://api.themoviedb.org/3/discover/tv?api_key=${API_KEY}&language=en-US&sort_by=popularity.desc&vote_count.gte=50`;
-        const movieUrl = `${baseMovie}${topGenres ? `&with_genres=${topGenres}` : ""}${yearPref ? `&primary_release_year=${yearPref}` : ""}`;
-        const tvUrl = `${baseTV}${topGenres ? `&with_genres=${topGenres}` : ""}${yearPref ? `&first_air_date_year=${yearPref}` : ""}`;
-        const queries: { url: string; type: "movie" | "tv" }[] = [
-          { url: movieUrl, type: "movie" },
-          { url: tvUrl, type: "tv" },
-        ];
-        if (tvCount > movieCount) queries.reverse();
-
-        const results: TMDBItem[] = [];
-        for (const q of queries) {
-          try {
-            const res = await fetch(q.url);
-            const data = await res.json();
-            const mapped = (data.results || []).map((it: any) => ({
-              id: it.id,
-              title: it.title,
-              name: it.name,
-              release_date: it.release_date,
-              first_air_date: it.first_air_date,
-              poster_path: it.poster_path,
-              vote_average: it.vote_average,
-              media_type: q.type,
-              genre_ids: it.genre_ids,
-            }));
-            for (const m of mapped) {
-              if (excludedIds.has(m.id)) continue;
-              if (!results.find(r => r.id === m.id)) results.push(m);
-              if (results.length >= 10) break;
-            }
-            if (results.length >= 10) break;
-          } catch (err) {
-            console.error("Discover fetch failed", err);
-          }
-        }
-
-        if (results.length < 10) {
-          try {
-            const res = await fetch(`https://api.themoviedb.org/3/trending/all/day?api_key=${API_KEY}&language=en-US`);
-            const data = await res.json();
-            const mapped = (data.results || []).map((it: any) => ({
-              id: it.id,
-              title: it.title,
-              name: it.name,
-              release_date: it.release_date,
-              first_air_date: it.first_air_date,
-              poster_path: it.poster_path,
-              vote_average: it.vote_average,
-              media_type: it.media_type as "movie" | "tv",
-              genre_ids: it.genre_ids,
-            }));
-            for (const m of mapped) {
-              if (excludedIds.has(m.id)) continue;
-              if (!results.find(r => r.id === m.id)) results.push(m);
-              if (results.length >= 10) break;
-            }
-          } catch (err) {
-            console.error("Trending fetch failed", err);
-          }
-        }
-
-        setItems(results.slice(0, 10));
       } catch (err) {
-        console.error(err);
+        console.error("Error fetching AI recommendations:", err);
       } finally {
         setLoading(false);
       }
@@ -241,24 +93,51 @@ const Recommendations: React.FC = () => {
   }, [items]);
 
   return (
-    <section className="w-full md:w-[1528px] flex justify-center mt-6">
-      <div className="pt-6 md:pt-[30px] w-full md:w-[1300px]">
-        <h2 className={`font-sans text-xl md:text-[24px] leading-[24px] font-semibold ${darkMode ? "text-white" : "text-black"}`}>
-          Recommendations for you
-        </h2>
+    <section className="w-full md:w-[1528px] flex justify-center mt-8">
+      <div className="pt-6 md:pt-[30px] w-full md:w-[1300px] px-4 md:px-0">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-2">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xl">✨</span>
+              <h2
+                className={`font-sans text-xl md:text-[24px] leading-[24px] font-bold ${
+                  darkMode ? "text-white" : "text-black"
+                }`}
+              >
+                AI Recommended For You
+              </h2>
+              <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded-full tracking-wider animate-pulse">
+                Foundry Powered
+              </span>
+            </div>
+            {userSummary && (
+              <p className="text-xs text-[#1DB954] mt-1 font-mono flex items-center gap-1">
+                <span>🤖 Profil Analizi:</span> {userSummary}
+              </p>
+            )}
+          </div>
+        </div>
 
         <div className="relative mt-6 overflow-visible">
-          <BackgroundBars width={bandWidth} top={barsTop} height={BAND_HEIGHT} className="absolute left-0 z-[0]" darkMode={darkMode} />
+          <BackgroundBars
+            width={bandWidth}
+            top={barsTop}
+            height={BAND_HEIGHT}
+            className="absolute left-0 z-[0]"
+            darkMode={darkMode}
+          />
 
           <ul
             ref={listRef}
-            className="relative z-[10] flex w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-0 md:ml-10 px-4 md:px-0 scrollbar-hide"
+            className="relative z-[10] flex w-full overflow-x-auto overflow-y-hidden snap-x snap-mandatory scroll-smooth ml-0 md:ml-6 px-4 md:px-0 scrollbar-hide py-2"
           >
             {loading
               ? Array.from({ length: 8 }).map((_, i) => (
                   <li
                     key={i}
-                    className={`w-[120px] h-[180px] md:w-auto md:h-auto shrink-0 animate-pulse rounded-xl bg-slate-200 ${i !== 0 ? "ml-3 md:ml-5" : ""}`}
+                    className={`w-[140px] md:w-[170px] h-[260px] shrink-0 animate-pulse rounded-2xl bg-slate-800/50 ${
+                      i !== 0 ? "ml-3 md:ml-5" : ""
+                    }`}
                   />
                 ))
               : items.map((item, i) => (
@@ -269,18 +148,37 @@ const Recommendations: React.FC = () => {
                     <Link to={`/${item.media_type || (item.name ? "tv" : "movie")}/${item.id}`}>
                       <div
                         data-poster
-                        className="w-[120px] md:w-[150px] flex flex-col items-center"
+                        className="w-[140px] md:w-[170px] flex flex-col items-center group relative"
                       >
-                        {item.poster_path ? (
-                          <img
-                            src={`${IMAGE_BASE}${item.poster_path}`}
-                            alt={item.title || item.name}
-                            className="rounded-xl shadow-md hover:shadow-xl transition"
-                          />
-                        ) : (
-                          <div className="w-[120px] md:w-[150px] h-[180px] bg-gray-600 rounded-xl" />
+                        <div className="relative overflow-hidden rounded-xl shadow-lg group-hover:shadow-2xl transition duration-300 transform group-hover:-translate-y-1">
+                          {item.poster_path ? (
+                            <img
+                              src={`${IMAGE_BASE}${item.poster_path}`}
+                              alt={item.title || item.name}
+                              className="w-[140px] md:w-[170px] h-[210px] object-cover rounded-xl"
+                            />
+                          ) : (
+                            <div className="w-[140px] md:w-[170px] h-[210px] bg-neutral-800 rounded-xl flex items-center justify-center text-xs text-neutral-400">
+                              Görsel Yok
+                            </div>
+                          )}
+
+                          {item.matchPercentage && (
+                            <div className="absolute top-2 right-2 bg-black/80 backdrop-blur-md border border-[#1DB954]/50 text-[#1DB954] text-[10px] font-bold px-2 py-0.5 rounded-full font-mono shadow-md">
+                              %{item.matchPercentage} Uyum
+                            </div>
+                          )}
+                        </div>
+
+                        <p className="mt-2 text-sm font-semibold text-center truncate w-full px-1">
+                          {item.title || item.name}
+                        </p>
+
+                        {item.aiReason && (
+                          <p className="text-[10px] text-gray-400 text-center line-clamp-2 mt-0.5 px-1 italic">
+                            "{item.aiReason}"
+                          </p>
                         )}
-                        <p className="mt-2 text-sm text-center">{item.title || item.name}</p>
                       </div>
                     </Link>
                   </li>
