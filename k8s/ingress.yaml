@@ -1,0 +1,41 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: movibase-ingress
+  namespace: movibase
+  annotations:
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "120"
+    nginx.ingress.kubernetes.io/proxy-body-size: "10m"
+spec:
+  ingressClassName: nginx
+  rules:
+    # !! Kendi domain'ini buraya yaz veya AKS'nin verdiği External IP'yi kullan
+    - host: movibase.example.com    # değiştir
+      http:
+        paths:
+          # /api/* → backend service
+          - path: /api
+            pathType: Prefix
+            backend:
+              service:
+                name: movibase-backend-svc
+                port:
+                  number: 5000
+          # /spotify/* → backend service
+          - path: /spotify
+            pathType: Prefix
+            backend:
+              service:
+                name: movibase-backend-svc
+                port:
+                  number: 5000
+          # /* → frontend service (React SPA)
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: movibase-frontend-svc
+                port:
+                  number: 80

@@ -1,0 +1,27 @@
+# ─── Backend Service — Node.js Express API ─────────────────────────────────
+FROM node:20-alpine
+
+# Install dumb-init for proper signal handling in containers
+RUN apk add --no-cache dumb-init
+
+# Create non-root user early so COPY --chown is not needed
+RUN addgroup -g 1001 -S nodejs && \
+    adduser -S nodeuser -u 1001
+
+WORKDIR /app
+
+# Copy backend package files and install production dependencies
+COPY --chown=nodeuser:nodejs backend/package*.json ./
+RUN npm ci --omit=dev --prefer-offline
+
+# Copy backend source
+COPY --chown=nodeuser:nodejs backend/ .
+
+# Run as non-root
+USER nodeuser
+
+EXPOSE 5000
+
+# Use dumb-init to handle PID 1 and signal forwarding properly
+ENTRYPOINT ["dumb-init", "--"]
+CMD ["node", "server.js"]

@@ -340,7 +340,7 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
     ) : (
       <>
         <a href="/login" className="block hover:text-[#01b4e4]">Login</a>
-        <a href="/signup" className="block hover:text-[#01b4e4]">Join TMDB</a>
+        <a href="/signup" className="block hover:text-[#01b4e4]">Join Movibase</a>
       </>
     )}
 

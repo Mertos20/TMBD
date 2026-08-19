@@ -34,6 +34,7 @@ import friendRoutes from "./routes/friends.js";
 import notificationRoutes from "./routes/notifications.js";
 import adminRoutes from "./routes/admin.js";
 import reportRoutes from "./routes/reports.js";
+import powerbiRoutes from "./routes/powerbi.js";
 
 const app = express();
 
@@ -92,6 +93,7 @@ app.use("/api/friends", friendRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/reports", reportRoutes);
+app.use("/api/powerbi", powerbiRoutes);
 app.use("/spotify", spotifyRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 

@@ -73,18 +73,25 @@ router.post("/ai", optionalVerifyToken, async (req, res) => {
       }
     }
 
-    // Build comprehensive user behavior profile for Azure AI Foundry
-    const profileText = `
+    // Determine if we have enough personal data to justify an AI call.
+    // Guests and users with empty libraries skip AI entirely → instant TMDB response (~200ms).
+    const hasPersonalData =
+      userFavorites.length > 0 || userWatchlist.length > 0 || userRatings.length > 0;
+
+    let aiResult = null;
+
+    if (userId && hasPersonalData) {
+      const profileText = `
 User Profile & Behavior Analysis:
 - Favorited Movies/Shows: ${userFavorites.map((f) => f.title || f.name).join(", ") || "None"}
 - Watchlist Items: ${userWatchlist.map((w) => w.title || w.name).join(", ") || "None"}
 - User High Ratings: ${userRatings.map((r) => `Movie ID ${r.movieId} Rated ${r.rating}/5`).join(", ") || "None"}
 - User Comments/Thoughts: ${userComments.map((c) => `"${c.comment}"`).join("; ") || "None"}
-- Recent Cookie / Browsing History: ${recentViews.map((v) => v.title || v.name || v).join(", ") || "None"}
+- Recent Browsing History: ${recentViews.map((v) => v.title || v.name || v).join(", ") || "None"}
 `;
 
-    const systemPrompt = `You are Movibase AI Engine, an expert film curator and personalized recommendation agent.
-Analyze the user's explicit behavior (favorites, watchlist, high ratings, comments) and implicit cookie browsing history.
+      const systemPrompt = `You are Movibase AI Engine, an expert film curator and personalized recommendation agent.
+Analyze the user's explicit behavior (favorites, watchlist, high ratings, comments) and implicit browsing history.
 You MUST act as a recommendation instruction tool and output a strictly valid JSON object matching this schema:
 
 {
@@ -101,18 +108,17 @@ You MUST act as a recommendation instruction tool and output a strictly valid JS
 
 Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do NOT repeat items from their favorites list. Output ONLY the JSON object.`;
 
-    let aiResult = null;
-    try {
-      const aiResponseText = await generateAIText({
-        prompt: profileText,
-        systemPrompt,
-        temperature: 0.7,
-        jsonMode: true,
-      });
-
-      aiResult = JSON.parse(aiResponseText);
-    } catch (aiError) {
-      console.warn("⚠️ Azure AI Foundry recommendation call fallback:", aiError.message);
+      try {
+        const aiResponseText = await generateAIText({
+          prompt: profileText,
+          systemPrompt,
+          temperature: 0.7,
+          jsonMode: true,
+        });
+        aiResult = JSON.parse(aiResponseText);
+      } catch (aiError) {
+        console.warn("⚠️ Azure AI Foundry recommendation call fallback:", aiError.message);
+      }
     }
 
     const knownTitles = new Set([
@@ -160,7 +166,7 @@ Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do 
       finalRecommendations = resolvedResults.filter(Boolean);
     }
 
-    // Fallback if AI recommendations were empty or failed
+    // Fallback: always runs for guests, runs for logged-in users if AI returned < 5 results
     if (finalRecommendations.length < 5) {
       try {
         const popRes = await fetch(
@@ -194,7 +200,7 @@ Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do 
     const payload = {
       userProfileSummary:
         aiResult?.userProfileSummary ||
-        "İzleme geçmişiniz ve tercihleriniz doğrultusunda hazırlanan kişiselleştirilmiş AI önerileri.",
+        "Günün en popüler ve çok izlenen yapımları arasından derlendi.",
       recommendations: finalRecommendations.slice(0, 10),
     };
 

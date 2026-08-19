@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: movibase-frontend-svc
+  namespace: movibase
+spec:
+  type: ClusterIP
+  selector:
+    app: movibase-frontend
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

@@ -43,10 +43,11 @@ export default function Footer() {
           <div className="flex flex-col items-center lg:items-start w-full lg:w-auto">
             <div className="flex items-center mb-6">
               <span className="text-3xl font-black bg-gradient-to-r from-[#01b4e4] to-[#90cea1] bg-clip-text text-transparent">
-                TBMD
+                Movi
               </span>
+              <span className="text-3xl font-black text-white">base</span>
               <span className="ml-2 text-sm font-bold bg-[#01b4e4] text-[#032541] px-2 py-1 rounded">
-                Best Movie DB
+                MVB
               </span>
             </div>
             <p className="text-sm text-gray-400 text-center lg:text-left max-w-xs hidden lg:block">
@@ -130,7 +131,7 @@ export default function Footer() {
         
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-gray-700 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} TBMD - The Best Movie Database. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Movibase. All rights reserved.</p>
         </div>
       </div>
     </footer>

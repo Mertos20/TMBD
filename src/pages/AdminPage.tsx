@@ -21,6 +21,7 @@ import {
   RadialBarChart,
   RadialBar
 } from "recharts";
+import PowerBIAnalytics from "../components/PowerBIAnalytics";
 
 interface User {
   _id: string;
@@ -366,6 +367,11 @@ const AdminPage = () => {
                     gradient="from-purple-500 to-violet-400"
                     darkMode={darkMode}
                   />
+                </div>
+
+                {/* Power BI Embedded & Data Analytics Stream Section */}
+                <div className="mb-6">
+                  <PowerBIAnalytics mode="admin" />
                 </div>
 
                 {/* Charts Row 1 - Modern Area & Bar Charts */}

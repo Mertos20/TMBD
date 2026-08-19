@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movibase-frontend
+  namespace: movibase
+  labels:
+    app: movibase-frontend
+spec:
+  replicas: 1                        # Low-cost: 1 replica
+  selector:
+    matchLabels:
+      app: movibase-frontend
+  template:
+    metadata:
+      labels:
+        app: movibase-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: movibasecr.azurecr.io/movibase-frontend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: "50m"             # Nginx çok az kaynak kullanır
+              memory: "64Mi"
+            limits:
+              cpu: "200m"
+              memory: "128Mi"
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 30

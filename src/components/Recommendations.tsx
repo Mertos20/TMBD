@@ -90,9 +90,6 @@ const Recommendations: React.FC = () => {
     buildRecommendations();
   }, []);
 
-  const consent = localStorage.getItem("cookieConsent");
-  if (consent !== "true") return null;
-
   useLayoutEffect(() => {
     const calc = () => {
       if (!listRef.current) return;

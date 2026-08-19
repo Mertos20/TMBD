@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: movibase-backend
+  namespace: movibase
+  labels:
+    app: movibase-backend
+spec:
+  replicas: 1                        # Low-cost: 1 replica
+  selector:
+    matchLabels:
+      app: movibase-backend
+  template:
+    metadata:
+      labels:
+        app: movibase-backend
+    spec:
+      containers:
+        - name: backend
+          image: movibasecr.azurecr.io/movibase-backend:latest
+          imagePullPolicy: Always
+          ports:
+            - containerPort: 5000
+          resources:
+            requests:
+              cpu: "100m"            # Low-cost: minimal CPU
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          envFrom:
+            - secretRef:
+                name: movibase-secrets
+          env:
+            - name: NODE_ENV
+              value: "production"
+            - name: PORT
+              value: "5000"
+          livenessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 20
+            periodSeconds: 30
+          readinessProbe:
+            httpGet:
+              path: /api/health
+              port: 5000
+            initialDelaySeconds: 10
+            periodSeconds: 10

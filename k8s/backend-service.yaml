@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: movibase-backend-svc
+  namespace: movibase
+spec:
+  # ClusterIP = sadece cluster içinden erişilebilir (frontend proxy ile)
+  type: ClusterIP
+  selector:
+    app: movibase-backend
+  ports:
+    - protocol: TCP
+      port: 5000
+      targetPort: 5000

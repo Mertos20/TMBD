@@ -4,6 +4,7 @@ import { useTheme } from "../components/ThemaContext";
 import BadgeSection from "../components/profile/BadgeSection";
 import { FaChartBar } from "react-icons/fa";
 import { API_URL } from "../config/api";
+import PowerBIAnalytics from "../components/PowerBIAnalytics";
 
 const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 const IMAGE_BASE = "https://image.tmdb.org/t/p/w200";
@@ -496,6 +497,11 @@ const ProfilePage = () => {
           rewardCode={rewardCode}
           onClaimReward={handleClaimReward}
         />
+
+        {/* POWER BI PROFILE ANALYTICS SECTION */}
+        <section className="mb-10">
+          <PowerBIAnalytics mode="profile" userId={targetUserId} />
+        </section>
 
         {/* LAST COMMENTS */}
         <section className="mb-10">
