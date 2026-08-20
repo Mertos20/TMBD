@@ -1,7 +1,9 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "../hooks/useTranslation";
 
 export default function Footer() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const footerLinks = {
     pages: [
@@ -51,7 +53,7 @@ export default function Footer() {
               </span>
             </div>
             <p className="text-sm text-gray-400 text-center lg:text-left max-w-xs hidden lg:block">
-              The Best Movie Database - A comprehensive platform for movie and TV show ratings, social networking, tournaments, and gamification.
+              {t("footer.desc")}
             </p>
           </div>
 
@@ -60,7 +62,7 @@ export default function Footer() {
             
             {/* Pages */}
             <div>
-              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">Pages</h3>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">{t("footer.pages")}</h3>
               <ul className="space-y-2 text-sm">
                 {footerLinks.pages.map((item) => (
                   <li key={item.label}>
@@ -77,7 +79,7 @@ export default function Footer() {
 
             {/* Features */}
             <div>
-              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">Features</h3>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">{t("footer.features")}</h3>
               <ul className="space-y-2 text-sm">
                 {footerLinks.features.map((item) => (
                   <li key={item.label}>
@@ -94,7 +96,7 @@ export default function Footer() {
 
             {/* Community */}
             <div>
-              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">Community</h3>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">{t("footer.community")}</h3>
               <ul className="space-y-2 text-sm">
                 {footerLinks.community.map((item) => (
                   <li key={item.label}>
@@ -111,7 +113,7 @@ export default function Footer() {
 
             {/* Legal */}
             <div>
-              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">Legal</h3>
+              <h3 className="font-bold text-lg mb-4 uppercase text-[#01b4e4]">{t("footer.legal")}</h3>
               <ul className="space-y-2 text-sm">
                 {footerLinks.legal.map((item) => (
                   <li key={item.label}>
@@ -131,7 +133,7 @@ export default function Footer() {
         
         {/* Copyright */}
         <div className="mt-12 pt-8 border-t border-gray-700 text-center text-sm text-gray-400">
-          <p>&copy; {new Date().getFullYear()} Movibase. All rights reserved.</p>
+          <p>&copy; {new Date().getFullYear()} Movibase. {t("footer.rights")}</p>
         </div>
       </div>
     </footer>

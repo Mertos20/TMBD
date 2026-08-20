@@ -3,6 +3,7 @@ import { Link, useNavigate, useLocation } from "react-router-dom";
 import { API_URL } from "../config/api";
 import { FaMoon, FaRegMoon, FaBell } from "react-icons/fa";
 import { useTheme } from "./ThemaContext";
+import { useTranslation } from "../hooks/useTranslation";
 
 type NavbarProps = { onSearchClick: () => void };
 
@@ -21,6 +22,7 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
   const [showNotifications, setShowNotifications] = useState(false);
   const navigate = useNavigate();
   const { darkMode, toggleDarkMode } = useTheme();
+  const { language, toggleLanguage, t } = useTranslation();
 
   const userId = localStorage.getItem("userId");
   const token = localStorage.getItem("token");
@@ -103,41 +105,41 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
                 <>
                   {/* Movies */}
                   <li className="relative group h-full flex items-center">
-                    <a href="#" className="hover:text-[#01b4e4]">Movies</a>
+                    <a href="#" className="hover:text-[#01b4e4]">{t("nav.movies")}</a>
                     <ul className="absolute left-0 top-full bg-white text-black rounded shadow-lg w-40 hidden group-hover:block z-50">
-                      <li><a href="/movie/popular" className="block px-4 py-2 hover:bg-gray-100">Popular</a></li>
-                      <li><a href="/movie/now_playing" className="block px-4 py-2 hover:bg-gray-100">Now Playing</a></li>
-                      <li><a href="/movie/upcoming" className="block px-4 py-2 hover:bg-gray-100">Upcoming</a></li>
-                      <li><a href="/movie/top_rated" className="block px-4 py-2 hover:bg-gray-100">Top Rated</a></li>
+                      <li><a href="/movie/popular" className="block px-4 py-2 hover:bg-gray-100">{t("nav.popular")}</a></li>
+                      <li><a href="/movie/now_playing" className="block px-4 py-2 hover:bg-gray-100">{t("nav.nowPlaying")}</a></li>
+                      <li><a href="/movie/upcoming" className="block px-4 py-2 hover:bg-gray-100">{t("nav.upcoming")}</a></li>
+                      <li><a href="/movie/top_rated" className="block px-4 py-2 hover:bg-gray-100">{t("nav.topRated")}</a></li>
                     </ul>
                   </li>
 
                   {/* TV Shows */}
                   <li className="relative group h-full flex items-center">
-                    <a href="#" className="hover:text-[#01b4e4]">TV Shows</a>
+                    <a href="#" className="hover:text-[#01b4e4]">{t("nav.tvShows")}</a>
                     <ul className="absolute left-0 top-full bg-white text-black rounded shadow-lg w-40 hidden group-hover:block z-50">
-                      <li><a href="/tv/popular" className="block px-4 py-2 hover:bg-gray-100">Popular</a></li>
-                      <li><a href="/tv/airing_today" className="block px-4 py-2 hover:bg-gray-100">Airing Today</a></li>
-                      <li><a href="/tv/on_tv" className="block px-4 py-2 hover:bg-gray-100">On TV</a></li>
-                      <li><a href="/tv/top_rated" className="block px-4 py-2 hover:bg-gray-100">Top Rated</a></li>
+                      <li><a href="/tv/popular" className="block px-4 py-2 hover:bg-gray-100">{t("nav.popular")}</a></li>
+                      <li><a href="/tv/airing_today" className="block px-4 py-2 hover:bg-gray-100">{t("nav.airingToday")}</a></li>
+                      <li><a href="/tv/on_tv" className="block px-4 py-2 hover:bg-gray-100">{t("nav.onTv")}</a></li>
+                      <li><a href="/tv/top_rated" className="block px-4 py-2 hover:bg-gray-100">{t("nav.topRated")}</a></li>
                     </ul>
                   </li>
 
                   {/* Duel */}
                   <li className="h-full flex items-center">
                     <a href="/duel" className="hover:text-[#01b4e4] font-bold bg-gradient-to-r from-red-500 to-purple-500 bg-clip-text text-transparent">
-                      Duel
+                      {t("nav.duel")}
                     </a>
                   </li>
 
                   {/* Social */}
                   <li className="h-full flex items-center">
-                    <a href="/social" className="hover:text-[#01b4e4]">Social</a>
+                    <a href="/social" className="hover:text-[#01b4e4]">{t("nav.social")}</a>
                   </li>
 
                   {/* Guide */}
                   <li className="h-full flex items-center">
-                    <a href="/guide" className="hover:text-[#01b4e4]">Guide</a>
+                    <a href="/guide" className="hover:text-[#01b4e4]">{t("nav.guide")}</a>
                   </li>
                 </>
               )}
@@ -147,6 +149,15 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
 
           {/* Right Side Desktop */}
           <div className="hidden lg:flex items-center space-x-6 text-white">
+
+            {/* Language Switcher */}
+            <button
+              onClick={toggleLanguage}
+              className="px-2.5 py-1 rounded-md bg-[#01b4e4]/20 border border-[#01b4e4]/40 hover:bg-[#01b4e4]/30 font-bold text-xs flex items-center gap-1.5 transition text-white"
+              title="Switch Language / Dil Değiştir"
+            >
+              <span>{language === "tr" ? "🇹🇷 TR" : "🇬🇧 EN"}</span>
+            </button>
 
             {/* Dark Mode */}
             <button
@@ -278,8 +289,8 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
               </>
             ) : (
               <>
-                <a href="/login" className="font-semibold hover:text-[#01b4e4]">Login</a>
-                <a href="/signup" className="font-semibold hover:text-[#01b4e4]">Join Movibase</a>
+                <a href="/login" className="font-semibold hover:text-[#01b4e4]">{t("nav.login")}</a>
+                <a href="/signup" className="font-semibold hover:text-[#01b4e4]">{t("nav.join")}</a>
               </>
             )}
 
@@ -312,40 +323,48 @@ const Navbar = ({ onSearchClick }: NavbarProps) => {
       {mobileMenuOpen && (
   <div className="lg:hidden bg-[#032541] text-white px-10 py-4 space-y-4">
 
-    {/* Mobile Dark Mode Toggle */}
-    <button
-      onClick={toggleDarkMode}
-      className="w-full text-left py-2 hover:text-[#01b4e4]"
-    >
-      {darkMode ? "Light Mode" : "Dark Mode"}
-    </button>
+    {/* Mobile Language & Dark Mode Toggles */}
+    <div className="flex items-center gap-4 py-2 border-b border-white/10">
+      <button
+        onClick={toggleLanguage}
+        className="px-3 py-1 rounded bg-[#01b4e4]/20 border border-[#01b4e4]/40 font-bold text-xs text-white"
+      >
+        {language === "tr" ? "🇹🇷 Türkçe" : "🇬🇧 English"}
+      </button>
+      <button
+        onClick={toggleDarkMode}
+        className="text-sm hover:text-[#01b4e4]"
+      >
+        {darkMode ? "☀️ Light Mode" : "🌙 Dark Mode"}
+      </button>
+    </div>
 
-    <a href="/movie/popular" className="block hover:text-[#01b4e4]">Popular Movies</a>
-    <a href="/movie/now_playing" className="block hover:text-[#01b4e4]">Now Playing</a>
-    <a href="/movie/upcoming" className="block hover:text-[#01b4e4]">Upcoming</a>
-    <a href="/movie/top_rated" className="block hover:text-[#01b4e4]">Top Rated Movies</a>
+    <a href="/movie/popular" className="block hover:text-[#01b4e4]">{t("nav.movies")} - {t("nav.popular")}</a>
+    <a href="/movie/now_playing" className="block hover:text-[#01b4e4]">{t("nav.nowPlaying")}</a>
+    <a href="/movie/upcoming" className="block hover:text-[#01b4e4]">{t("nav.upcoming")}</a>
+    <a href="/movie/top_rated" className="block hover:text-[#01b4e4]">{t("nav.topRated")}</a>
 
     <hr className="border-white/20" />
 
-    <a href="/tv/popular" className="block hover:text-[#01b4e4]">Popular TV</a>
-    <a href="/tv/top_rated" className="block hover:text-[#01b4e4]">Top Rated TV</a>
+    <a href="/tv/popular" className="block hover:text-[#01b4e4]">{t("nav.tvShows")} - {t("nav.popular")}</a>
+    <a href="/tv/top_rated" className="block hover:text-[#01b4e4]">{t("nav.topRated")}</a>
 
     <hr className="border-white/20" />
 
     {userId ? (
       <>
         <a href="/profile" className="block hover:text-[#01b4e4]">Profile</a>
-        <button onClick={handleLogout} className="block w-full text-left hover:text-[#01b4e4]">Logout</button>
+        <button onClick={handleLogout} className="block w-full text-left hover:text-[#01b4e4]">{t("nav.logout")}</button>
       </>
     ) : (
       <>
-        <a href="/login" className="block hover:text-[#01b4e4]">Login</a>
-        <a href="/signup" className="block hover:text-[#01b4e4]">Join Movibase</a>
+        <a href="/login" className="block hover:text-[#01b4e4]">{t("nav.login")}</a>
+        <a href="/signup" className="block hover:text-[#01b4e4]">{t("nav.join")}</a>
       </>
     )}
 
     <button onClick={onSearchClick} className="block hover:text-[#01b4e4]">
-      Search
+      {t("nav.search")}
     </button>
   </div>
 )}

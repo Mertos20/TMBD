@@ -20,6 +20,7 @@ import GuidePage from "./pages/GuidePage";
 import AdminPage from "./pages/AdminPage";
 
 import { ThemeProvider } from "./components/ThemaContext";
+import { LanguageProvider } from "./aspects/LanguageContext";
 
 function App() {
   const searchInputRef = useRef<HTMLInputElement>(null);
@@ -33,37 +34,39 @@ function App() {
   const hideSearchBar = ["/login", "/signup"].includes(location.pathname);
 
   return (
-    <ThemeProvider>
-      <div className="min-h-screen transition-colors duration-300">
-        {/* Navbar ve SearchBar sabit renk */}
-        <Navbar onSearchClick={handleSearchClick} />
-        {!hideSearchBar && <SearchBar ref={searchInputRef} />}
+    <LanguageProvider>
+      <ThemeProvider>
+        <div className="min-h-screen transition-colors duration-300">
+          {/* Navbar ve SearchBar sabit renk */}
+          <Navbar onSearchClick={handleSearchClick} />
+          {!hideSearchBar && <SearchBar ref={searchInputRef} />}
 
-        {/* Sadece sayfalar ThemeProvider’dan etkilenir */}
-        <div >
-          <Routes>
-            <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
-            <Route path="/signup" element={!token ? <Signup /> : <Navigate to="/" />} />
-            <Route path="/forgot-password" element={<ForgotPassword />} />
-            <Route path="/reset-password/:token" element={<ResetPassword />} />
+          {/* Sadece sayfalar ThemeProvider’dan etkilenir */}
+          <div >
+            <Routes>
+              <Route path="/login" element={!token ? <Login /> : <Navigate to="/" />} />
+              <Route path="/signup" element={!token ? <Signup /> : <Navigate to="/" />} />
+              <Route path="/forgot-password" element={<ForgotPassword />} />
+              <Route path="/reset-password/:token" element={<ResetPassword />} />
 
-            <Route path="/" element={token ? <Home /> : <Navigate to="/login" />} />
-            <Route path="/search" element={token ? <SearchResults /> : <Navigate to="/login" />} />
-            <Route path="/:type/:param" element={token ? <RouteHandler /> : <Navigate to="/login" />} />
-            <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
-            <Route path="/profile/:userId" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
-            <Route path="/profile-detail" element={token ? <ProfileDetail /> : <Navigate to="/login" />} />
-            <Route path="/duel" element={token ? <DuelPage /> : <Navigate to="/login" />} />
-            <Route path="/social" element={token ? <SocialPage /> : <Navigate to="/login" />} />
-            <Route path="/guide" element={token ? <GuidePage /> : <Navigate to="/login" />} />
-            <Route path="/admin" element={token ? <AdminPage /> : <Navigate to="/login" />} />
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+              <Route path="/" element={token ? <Home /> : <Navigate to="/login" />} />
+              <Route path="/search" element={token ? <SearchResults /> : <Navigate to="/login" />} />
+              <Route path="/:type/:param" element={token ? <RouteHandler /> : <Navigate to="/login" />} />
+              <Route path="/profile" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
+              <Route path="/profile/:userId" element={token ? <ProfilePage /> : <Navigate to="/login" />} />
+              <Route path="/profile-detail" element={token ? <ProfileDetail /> : <Navigate to="/login" />} />
+              <Route path="/duel" element={token ? <DuelPage /> : <Navigate to="/login" />} />
+              <Route path="/social" element={token ? <SocialPage /> : <Navigate to="/login" />} />
+              <Route path="/guide" element={token ? <GuidePage /> : <Navigate to="/login" />} />
+              <Route path="/admin" element={token ? <AdminPage /> : <Navigate to="/login" />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </div>
+
+          <Footer />
         </div>
-
-        <Footer />
-      </div>
-    </ThemeProvider>
+      </ThemeProvider>
+    </LanguageProvider>
   );
 }
 

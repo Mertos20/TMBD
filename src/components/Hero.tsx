@@ -1,13 +1,14 @@
 import { useState, useEffect, FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import heroBg from "../aspects/Hero4.png";
+import { useTranslation } from "../hooks/useTranslation";
 
 type HeroProps = {
   onSearch?: (q: string) => void;
-  
 };
 
 export default function Hero({ onSearch }: HeroProps) {
+  const { t } = useTranslation();
   const [q, setQ] = useState("");
   const navigate = useNavigate();
   const [bgIndex, setBgIndex] = useState(0);
@@ -67,7 +68,7 @@ export default function Hero({ onSearch }: HeroProps) {
           <p className="text-white font-bold tracking-[-0.02em] text-3xl sm:text-4xl md:text-[48px] m-0 leading-tight">
             {userName ? (
               <>
-                Welcome{" "}
+                {t("hero.welcome")}{" "}
                 <span className="bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] bg-clip-text text-transparent">
                   {userName}
                 </span>
@@ -75,13 +76,13 @@ export default function Hero({ onSearch }: HeroProps) {
               </>
             ) : (
               <span className="bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] bg-clip-text text-transparent">
-                Welcome.
+                {t("hero.welcome")}.
               </span>
             )}
           </p>
 
           <p className="text-white font-semibold text-base sm:text-xl md:text-[30px] m-0 leading-tight">
-            Millions of movies, TV shows and people to discover. Explore now.
+            {t("hero.subtitle")}
           </p>
         </div>
 
@@ -94,7 +95,7 @@ export default function Hero({ onSearch }: HeroProps) {
             <input
               aria-label="search"
               className="flex-1 bg-transparent text-[16px] text-[#2c3e50] placeholder:text-[#9aa4b1] outline-none h-[48px]"
-              placeholder="Search for a movie, tv show, person......"
+              placeholder={t("hero.searchPlaceholder")}
               value={q}
               onChange={(e) => setQ(e.target.value)}
             />
@@ -103,7 +104,7 @@ export default function Hero({ onSearch }: HeroProps) {
               type="submit"
               className="h-[48px] px-6 rounded-full bg-gradient-to-r from-[#1ed5a9] to-[#01b4e4] font-semibold text-white transition-opacity hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#01b4e4]/50 w-full sm:w-auto"
             >
-              Search
+              {t("hero.searchButton")}
             </button>
           </form>
         </div>

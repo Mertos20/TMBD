@@ -2,6 +2,7 @@ import React, { useEffect, useLayoutEffect, useMemo, useRef, useState } from "re
 import MovieCard from "./MovieCard";
 import { Link } from "react-router-dom";
 import { useTheme } from "./ThemaContext"; // 🌙 Theme Context import
+import { useTranslation } from "../hooks/useTranslation";
 
 interface TMDBItem {
   id: number;
@@ -19,6 +20,7 @@ const BAND_HEIGHT = 300;
 
 const Trending: React.FC = () => {
   const { darkMode } = useTheme(); // 🌙 darkMode kullan
+  const { t } = useTranslation();
   const [items, setItems] = useState<TMDBItem[]>([]);
   const [period, setPeriod] = useState<"day" | "week">("day");
   const [loading, setLoading] = useState(false);
@@ -69,15 +71,15 @@ const Trending: React.FC = () => {
         {/* Başlık ve sekmeler */}
         <div className="flex flex-col md:flex-row md:items-center px-4 md:px-10 gap-3 md:gap-0 h-auto md:h-[29.6px]">
           <h2 className={`font-sans text-xl md:text-[24px] leading-[24px] font-semibold md:mr-5 ${darkMode ? "text-white" : "text-black"}`}>
-            Trending
+            {t("trending.title")}
           </h2>
 
           <div className={`inline-flex items-center rounded-full border ${darkMode ? "border-white/30" : "border-[#0d253f1a]"}`}>
             <Tab active={period === "day"} onClick={() => setPeriod("day")}>
-              Today
+              {t("trending.today")}
             </Tab>
             <Tab active={period === "week"} onClick={() => setPeriod("week")}>
-              This Week
+              {t("trending.thisWeek")}
             </Tab>
           </div>
         </div>

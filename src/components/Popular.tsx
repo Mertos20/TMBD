@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from "react";
 import MovieCard from "./MovieCard";
 import { Link } from "react-router-dom";
 import { useTheme } from "./ThemaContext"; // 🌙 Theme context
+import { useTranslation } from "../hooks/useTranslation";
 
 interface TMDBItem {
   id: number;
@@ -14,20 +15,21 @@ interface TMDBItem {
   media_type?: "movie" | "tv" | "person";
 }
 
-const tabs = [
-  { label: "Streaming", key: "now_playing" },
-  { label: "On TV", key: "tv_on_the_air" },
-  { label: "For Rent", key: "movie_upcoming" },
-  { label: "In Theaters", key: "in_theaters" },
-];
-
 const API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
 
 const Popular: React.FC = () => {
   const { darkMode } = useTheme(); // 🌙 dark mode
+  const { t } = useTranslation();
   const [items, setItems] = useState<TMDBItem[]>([]);
   const [loading, setLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("now_playing");
+
+  const tabs = [
+    { label: t("nav.streaming"), key: "now_playing" },
+    { label: t("nav.onTv"), key: "tv_on_the_air" },
+    { label: t("nav.upcoming"), key: "movie_upcoming" },
+    { label: t("nav.nowPlaying"), key: "in_theaters" },
+  ];
 
   const listRef = useRef<HTMLUListElement>(null);
 
@@ -77,10 +79,10 @@ const Popular: React.FC = () => {
       <div className="pt-5 md:pt-[30px] w-full md:w-[1300px] h-auto md:h-[430.6px] px-4 md:px-0">
         <div className="flex flex-col md:flex-row items-start md:items-center px-0 md:px-10 space-y-4 md:space-y-0 md:h-[29.6px]">
           <h2 className={`font-sans text-xl md:text-[24px] leading-[24px] font-semibold mr-0 md:mr-5 ${darkMode ? "text-white" : "text-black"}`}>
-            What's Popular
+            {t("popular.title")}
           </h2>
 
-          <div className={`flex flex-wrap md:flex-nowrap rounded-full overflow-x-auto scrollbar-thin scrollbar-thumb-white/20 ${darkMode ? "border-white/30" : "border-black"}`}>
+          <div className={`flex flex-wrap md:flex-nowrap rounded-full overflow-x-auto scrollbar-thin scrollbar-thumb-white/20 ${darkMode ? "border-white/30" : "border-[#0d253f1a]"}`}>
             {tabs.map((tab) => (
               <Tab
                 key={tab.key}
