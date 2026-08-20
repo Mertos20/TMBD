@@ -4,6 +4,7 @@ import User from "../models/User.js";
 import Comment from "../models/Comment.js";
 import Favorite from "../models/Favorite.js";
 import WatchList from "../models/WatchList.js";
+import { triggerNotification } from "../utils/notificationService.js";
 
 const router = express.Router();
 
@@ -177,10 +178,26 @@ router.post("/users/:id/unsuspend", verifyAdmin, async (req, res) => {
   }
 });
 
-// Delete user comment
+// Delete user comment (admin)
 router.delete("/comments/:id", verifyAdmin, async (req, res) => {
   try {
-    await Comment.findByIdAndDelete(req.params.id);
+    // Yorumu sil'den önce sahibini al
+    const comment = await Comment.findById(req.params.id);
+    if (!comment) return res.status(404).json({ error: "Comment not found" });
+
+    const commentOwnerId = comment.userId?.toString();
+
+    await comment.deleteOne();
+
+    // Yorum sahibine bildirim gönder (Azure Function App, fire-and-forget)
+    if (commentOwnerId) {
+      triggerNotification({
+        type: "comment_deleted",
+        recipientId: commentOwnerId,
+        message: "Yorumun bir yönetici tarafından kaldırıldı.",
+      }, { fireAndForget: true });
+    }
+
     res.json({ message: "Comment deleted successfully" });
   } catch (err) {
     res.status(500).json({ error: "Failed to delete comment" });

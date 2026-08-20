@@ -4,8 +4,8 @@ import User from "../models/User.js";
 import Rating from "../models/Rating.js";
 import Favorite from "../models/Favorite.js";
 import Comment from "../models/Comment.js";
-import Notification from "../models/Notification.js";
 import FollowRequest from "../models/FollowRequest.js";
+import { triggerNotification } from "../utils/notificationService.js";
 
 const router = express.Router();
 
@@ -78,12 +78,12 @@ router.post("/follow/:id", verifyToken, async (req, res) => {
         to: req.params.id
       });
 
-      // Notify the target user
-      await Notification.create({
-        recipient: req.params.id,
-        sender: req.user.id,
-        type: "follow_request"
-      });
+      // Notify the target user via Azure Function App (fire-and-forget)
+      triggerNotification({
+        type: "follow_request",
+        recipientId: req.params.id,
+        senderId: req.user.id,
+      }, { fireAndForget: true });
 
       return res.json({ success: true, requestSent: true });
     }
@@ -92,12 +92,12 @@ router.post("/follow/:id", verifyToken, async (req, res) => {
     await User.findByIdAndUpdate(req.user.id, { $addToSet: { following: req.params.id } });
     await User.findByIdAndUpdate(req.params.id, { $addToSet: { followers: req.user.id } });
 
-    // Create Notification
-    await Notification.create({
-      recipient: req.params.id,
-      sender: req.user.id,
-      type: "follow"
-    });
+    // Notify via Azure Function App (fire-and-forget)
+    triggerNotification({
+      type: "follow",
+      recipientId: req.params.id,
+      senderId: req.user.id,
+    }, { fireAndForget: true });
 
     res.json({ success: true });
   } catch (err) {
@@ -149,12 +149,12 @@ router.post("/requests/:requestId/accept", verifyToken, async (req, res) => {
     request.status = "accepted";
     await request.save();
 
-    // Notify the requester
-    await Notification.create({
-      recipient: request.from,
-      sender: req.user.id,
-      type: "follow_accepted"
-    });
+    // Notify the requester via Azure Function App (fire-and-forget)
+    triggerNotification({
+      type: "follow_accepted",
+      recipientId: request.from.toString(),
+      senderId: req.user.id,
+    }, { fireAndForget: true });
 
     res.json({ success: true });
   } catch (err) {

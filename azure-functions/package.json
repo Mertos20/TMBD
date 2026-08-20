@@ -1,0 +1,17 @@
+{
+  "name": "movibase-functions",
+  "version": "1.0.0",
+  "description": "Azure Function App for Movibase — handles async notification delivery",
+  "main": "src/functions/*.js",
+  "scripts": {
+    "start": "func start",
+    "test": "echo \"No tests yet\""
+  },
+  "dependencies": {
+    "mongoose": "^8.5.0"
+  },
+  "devDependencies": {
+    "@azure/functions": "^4.5.0"
+  },
+  "type": "module"
+}
