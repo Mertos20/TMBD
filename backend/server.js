@@ -75,6 +75,36 @@ if (process.env.MONGO_URI) {
 }
 
 
+// Root welcome / status endpoint
+app.get("/", (req, res) => {
+  res.status(200).json({
+    message: "Movibase Backend API is running successfully!",
+    status: "healthy",
+    service: "movibase-api",
+    version: "1.0.0",
+    frontendUrl: "https://orange-dune-0a919c503.7.azurestaticapps.net",
+    endpoints: {
+      health: "/api/health",
+      auth: "/api/auth",
+      comments: "/api/comments",
+      favorites: "/api/favorites",
+      watchlists: "/api/watchlists",
+      vibe: "/api/vibe",
+      ratings: "/api/ratings",
+      gamification: "/api/gamification",
+      recommendations: "/api/recommendations",
+      duel: "/api/duel",
+      friends: "/api/friends",
+      notifications: "/api/notifications",
+      admin: "/api/admin",
+      reports: "/api/reports",
+      powerbi: "/api/powerbi",
+      spotify: "/spotify",
+      chatbot: "/api/chatbot"
+    }
+  });
+});
+
 // Health Check Endpoint for Azure App Service & Ping
 app.get("/api/health", (req, res) => {
   res.status(200).json({ status: "OK", timestamp: new Date(), service: "movibase-api" });
@@ -96,6 +126,15 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/powerbi", powerbiRoutes);
 app.use("/spotify", spotifyRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+
+// Fallback 404 handler for unknown routes
+app.use((req, res) => {
+  res.status(404).json({
+    error: "Endpoint not found",
+    path: req.originalUrl,
+    message: "Use / for API info or check the frontend at https://orange-dune-0a919c503.7.azurestaticapps.net"
+  });
+});
 
 
 const PORT = process.env.PORT || 5000;
