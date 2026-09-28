@@ -1,7 +1,7 @@
 # Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
 # More GitHub Actions for Azure: https://github.com/Azure/actions
 
-name: Build and deploy Node.js app to Azure Web App - webb-mb
+name: Build and deploy MOVIBASE to Azure Web App
 
 on:
   push:
@@ -18,18 +18,33 @@ jobs:
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:
-          node-version: '22.x'
+          node-version: '20.x'
 
-      - name: Install production dependencies & zip package
+      - name: Install frontend dependencies and build
+        run: |
+          npm ci
+          npm run build
+        env:
+          VITE_API_URL: ""
+          VITE_AZURE_TRANSLATOR_KEY: ${{ secrets.VITE_AZURE_TRANSLATOR_KEY }}
+          VITE_AZURE_TRANSLATOR_REGION: ${{ vars.AZURE_TRANSLATOR_REGION }}
+          VITE_AZURE_TRANSLATOR_ENDPOINT: ${{ vars.AZURE_TRANSLATOR_ENDPOINT }}
+
+      - name: Install backend dependencies and create deployment package
         run: |
           cd backend
-          npm install --omit=dev
+          npm ci --omit=dev
+          cd ..
+          mkdir release
+          cp -R backend/. release/
+          cp -R dist release/dist
+          cd release
           zip -r ../release.zip .
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
         with:
-          app-name: 'webb-mb'
+          app-name: ${{ vars.AZURE_WEBAPP_NAME }}
           package: 'release.zip'
-          publish-profile: ${{ secrets.AZUREAPPSERVICE_PUBLISHPROFILE_F96813BA56824BE8B50DBB87D040F32B }}
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}

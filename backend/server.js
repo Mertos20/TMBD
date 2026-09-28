@@ -18,6 +18,7 @@ import http from "http";
 import express from "express";
 import mongoose from "mongoose";
 import cors from "cors";
+import { existsSync } from "fs";
 import path from "path";
 import authRoutes from "./routes/auth.js";
 import commentRoutes from "./routes/comments.js";
@@ -37,6 +38,12 @@ import reportRoutes from "./routes/reports.js";
 import powerbiRoutes from "./routes/powerbi.js";
 
 const app = express();
+const deployedFrontendPath = path.join(process.cwd(), "dist");
+const localFrontendPath = path.resolve(process.cwd(), "..", "dist");
+const frontendPath = existsSync(deployedFrontendPath)
+  ? deployedFrontendPath
+  : localFrontendPath;
+const frontendIndexPath = path.join(frontendPath, "index.html");
 
 // Production CORS Configuration (supports Azure Static Web Apps & Local dev)
 const allowedOrigins = [
@@ -126,6 +133,13 @@ app.use("/api/reports", reportRoutes);
 app.use("/api/powerbi", powerbiRoutes);
 app.use("/spotify", spotifyRoutes);
 app.use("/api/chatbot", chatbotRoutes);
+
+if (existsSync(frontendIndexPath)) {
+  app.use(express.static(frontendPath));
+  app.get("/{*splat}", (req, res) => {
+    res.sendFile(frontendIndexPath);
+  });
+}
 
 // Fallback 404 handler for unknown routes
 app.use((req, res) => {
