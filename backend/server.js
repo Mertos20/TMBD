@@ -135,7 +135,11 @@ app.use("/spotify", spotifyRoutes);
 app.use("/api/chatbot", chatbotRoutes);
 
 if (existsSync(frontendIndexPath)) {
-  app.use(express.static(frontendPath));
+  app.use(express.static(frontendPath, {
+    cacheControl: false,
+    etag: false,
+    lastModified: false,
+  }));
   app.get("/{*splat}", (req, res) => {
     res.sendFile(frontendIndexPath);
   });
