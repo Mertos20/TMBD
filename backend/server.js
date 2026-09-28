@@ -51,6 +51,7 @@ const allowedOrigins = [
   "http://localhost:5174",
   "https://orange-dune-0a919c503.7.azurestaticapps.net",
   process.env.FRONTEND_URL,
+  process.env.WEBSITE_HOSTNAME ? `https://${process.env.WEBSITE_HOSTNAME}` : null,
 ].filter(Boolean);
 
 app.use(
