@@ -32,7 +32,6 @@ router.post("/", async (req, res) => {
         prompt,
         systemPrompt: "You are a movie recommendation assistant. Always return valid JSON as requested.",
         temperature: 0.7,
-        jsonMode: true,
       });
 
       const cleanedText = rawText.replace(/```json|```/g, "").trim();
