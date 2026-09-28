@@ -40,8 +40,17 @@ router.post("/", async (req, res) => {
       
       parsedData = JSON.parse(cleanedText);
     } catch (err) {
-      console.error("❌ Azure AI Foundry Error:", err);
-      return res.status(500).json({ error: "Azure AI Foundry API failed" });
+      const status = err.status || err.statusCode || 500;
+      const code = err.code || err.error?.code || "foundry_request_failed";
+      console.error("Azure AI Foundry Error:", {
+        status,
+        code,
+        message: err.message,
+      });
+      return res.status(status).json({
+        error: "Azure AI Foundry API failed",
+        code,
+      });
     }
 
     const titles = (parsedData.movies || []).slice(0, 10);
