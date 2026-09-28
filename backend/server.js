@@ -82,8 +82,8 @@ if (process.env.MONGO_URI) {
 }
 
 
-// Root welcome / status endpoint
-app.get("/", (req, res) => {
+// API status endpoint
+app.get("/api", (req, res) => {
   res.status(200).json({
     message: "Movibase Backend API is running successfully!",
     status: "healthy",
