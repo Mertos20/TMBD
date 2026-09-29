@@ -31,7 +31,7 @@ router.post("/", async (req, res) => {
       const rawText = await generateAIText({
         prompt,
         systemPrompt: "You are a movie recommendation assistant. Always return valid JSON as requested.",
-        temperature: 0.7,
+        temperature: 1,
       });
 
       const cleanedText = rawText.replace(/```json|```/g, "").trim();
