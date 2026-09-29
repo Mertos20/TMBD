@@ -1,9 +1,29 @@
 import express from "express";
 import fetch from "node-fetch";
+import jwt from "jsonwebtoken";
 import { generateAIText } from "../utils/aiFoundry.js";
+import WatchList from "../models/WatchList.js";
 
 const router = express.Router();
 const TMDB_API_KEY = "d0b51a37ed5a34284904dab55afbc04c";
+
+const getWatchlistContext = async (authorization) => {
+  const token = authorization?.split(" ")[1]?.trim();
+  if (!token) return "";
+
+  try {
+    const { id } = jwt.verify(token, process.env.JWT_SECRET);
+    const watchlist = await WatchList.find({ userId: id })
+      .sort({ createdAt: -1 })
+      .limit(12)
+      .select("title -_id")
+      .lean();
+
+    return watchlist.map((item) => item.title).join(", ");
+  } catch {
+    return "";
+  }
+};
 
 router.post("/", async (req, res) => {
   try {
@@ -16,9 +36,15 @@ router.post("/", async (req, res) => {
     let parsedData = { sentiment: "neutral", movies: [] };
     
     try {
+      const watchlistTitles = await getWatchlistContext(req.headers.authorization);
+      const preferenceContext = watchlistTitles
+        ? `The user has saved these titles to their watchlist: ${watchlistTitles}. Use them as a preference signal, but avoid recommending duplicates.`
+        : "The user has not saved any titles yet."
+
       const prompt = `
         Analyze the sentiment of the user's input: "${message}".
         Based on this sentiment, suggest 10 movies or TV shows.
+        ${preferenceContext}
 
         Return the result in the following JSON format:
         {

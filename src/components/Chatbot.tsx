@@ -25,6 +25,11 @@ interface Message {
   movieDetail?: MovieDetail; // Film detayı için yeni alan
 }
 
+const getChatHistoryKey = () => {
+  const userId = localStorage.getItem("userId") || "guest";
+  return `movibase-chat-history:${userId}`;
+};
+
 // --- DİNAMİK İÇERİK ---
 const WELCOME_MESSAGES = [
   "Hi there! 👋 I'm your movie assistant. 🎬 How are you feeling today? ✨",
@@ -114,6 +119,18 @@ const Confetti = () => {
 const Chatbot: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<Message[]>(() => {
+    const savedMessages = localStorage.getItem(getChatHistoryKey());
+    if (savedMessages) {
+      try {
+        const parsedMessages = JSON.parse(savedMessages);
+        if (Array.isArray(parsedMessages) && parsedMessages.length > 0) {
+          return parsedMessages;
+        }
+      } catch {
+        localStorage.removeItem(getChatHistoryKey());
+      }
+    }
+
     const username = localStorage.getItem("username");
     let text = getRandomItem(WELCOME_MESSAGES);
     if (username) {
@@ -133,6 +150,8 @@ const Chatbot: React.FC = () => {
   const [quizScore, setQuizScore] = useState(0);
   const [currentQuizQuestion, setCurrentQuizQuestion] = useState<{ q: string; a: string; options: string[] } | null>(null);
   const [showConfetti, setShowConfetti] = useState(false);
+  const [watchlistMovieIds, setWatchlistMovieIds] = useState<Set<number>>(() => new Set());
+  const [savingMovieId, setSavingMovieId] = useState<number | null>(null);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -144,6 +163,26 @@ const Chatbot: React.FC = () => {
       containerRef.current.scrollTo({ top: containerRef.current.scrollHeight, behavior: "smooth" });
     }
   }, [messages, loading]);
+
+  useEffect(() => {
+    localStorage.setItem(getChatHistoryKey(), JSON.stringify(messages.slice(-30)));
+  }, [messages]);
+
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    fetch(`${API_URL}/api/watchlists`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((response) => (response.ok ? response.json() : []))
+      .then((items) => {
+        if (Array.isArray(items)) {
+          setWatchlistMovieIds(new Set(items.map((item) => item.movieId)));
+        }
+      })
+      .catch(() => undefined);
+  }, []);
 
   // Sayfa değiştiğinde veya chat açıldığında önerileri güncelle
   useEffect(() => {
@@ -383,7 +422,12 @@ const Chatbot: React.FC = () => {
     try {
       const res = await fetch(`${API_URL}/api/chatbot`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(localStorage.getItem("token")
+            ? { Authorization: `Bearer ${localStorage.getItem("token")}` }
+            : {}),
+        },
         body: JSON.stringify({ message: trimmedInput }),
       });
 
@@ -435,6 +479,41 @@ const Chatbot: React.FC = () => {
     setMessages([{ from: "bot", text: "Chat cleared. How can I help you now?" }]);
     setQuizActive(false);
     setSuggestions(getShuffledSuggestions(6));
+  };
+
+  const addToWatchlist = async (movie: Movie) => {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      setMessages((prev) => [...prev, { from: "bot", text: "Sign in to save recommendations to your watchlist." }]);
+      return;
+    }
+
+    setSavingMovieId(movie.id);
+    try {
+      const response = await fetch(`${API_URL}/api/watchlists`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          movieId: movie.id,
+          title: movie.title,
+          poster_path: movie.poster_path,
+          media_type: movie.type,
+        }),
+      });
+
+      if (!response.ok && response.status !== 409) {
+        throw new Error("Could not add the title to your watchlist.");
+      }
+
+      setWatchlistMovieIds((previous) => new Set(previous).add(movie.id));
+    } catch {
+      setMessages((prev) => [...prev, { from: "bot", text: "I could not save that title. Please try again." }]);
+    } finally {
+      setSavingMovieId(null);
+    }
   };
 
   return (
@@ -532,6 +611,13 @@ const Chatbot: React.FC = () => {
                         {msg.movieDetail.vote_average ? ` • ★ ${msg.movieDetail.vote_average.toFixed(1)}` : ''}
                       </p>
                       <p className="text-xs text-gray-300 line-clamp-4">{msg.movieDetail.overview}</p>
+                      <button
+                        onClick={() => addToWatchlist(msg.movieDetail!)}
+                        disabled={watchlistMovieIds.has(msg.movieDetail.id) || savingMovieId === msg.movieDetail.id}
+                        className="mt-2 text-xs text-cyan-300 hover:text-white disabled:text-gray-500 disabled:cursor-default"
+                      >
+                        {watchlistMovieIds.has(msg.movieDetail.id) ? "Saved" : savingMovieId === msg.movieDetail.id ? "Saving..." : "+ Watchlist"}
+                      </button>
                     </div>
                   </div>
                 )}
@@ -540,12 +626,9 @@ const Chatbot: React.FC = () => {
                 {msg.movies && msg.movies.length > 0 && (
                   <div className="mt-3 w-full overflow-x-auto pb-2 scrollbar-hide flex gap-3 px-1">
                     {msg.movies.map((movie) => (
-                      <Link
-                        key={movie.id}
-                        to={`/${movie.type}/${movie.id}`}
-                        className="flex-shrink-0 w-28 group"
-                      >
-                        <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md mb-1">
+                      <div key={movie.id} className="flex-shrink-0 w-28 group">
+                        <Link to={`/${movie.type}/${movie.id}`}>
+                          <div className="relative aspect-[2/3] rounded-lg overflow-hidden shadow-md mb-1">
                           {movie.poster_path ? (
                             <img
                               src={`https://image.tmdb.org/t/p/w200${movie.poster_path}`}
@@ -558,11 +641,19 @@ const Chatbot: React.FC = () => {
                             </div>
                           )}
                           <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-                        </div>
-                        <p className="text-xs font-medium truncate text-gray-300 group-hover:text-cyan-400 transition-colors">
-                          {movie.title}
-                        </p>
-                      </Link>
+                          </div>
+                          <p className="text-xs font-medium truncate text-gray-300 group-hover:text-cyan-400 transition-colors">
+                            {movie.title}
+                          </p>
+                        </Link>
+                        <button
+                          onClick={() => addToWatchlist(movie)}
+                          disabled={watchlistMovieIds.has(movie.id) || savingMovieId === movie.id}
+                          className="mt-1 text-[11px] text-cyan-300 hover:text-white disabled:text-gray-500 disabled:cursor-default"
+                        >
+                          {watchlistMovieIds.has(movie.id) ? "Saved" : savingMovieId === movie.id ? "Saving..." : "+ Watchlist"}
+                        </button>
+                      </div>
                     ))}
                   </div>
                 )}
