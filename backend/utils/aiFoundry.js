@@ -25,14 +25,14 @@ export const getAIFoundryClient = () => {
  * @param {Object} options
  * @param {string} options.prompt - User input prompt.
  * @param {string} [options.systemPrompt] - Optional system instruction.
- * @param {number} [options.temperature=0.7] - Temperature parameter.
+ * @param {number} [options.temperature=1] - Temperature parameter.
  * @param {boolean} [options.jsonMode=false] - Request JSON object response format.
  * @returns {Promise<string>} The response content from the Azure AI Foundry model.
  */
 export const generateAIText = async ({
   prompt,
   systemPrompt = "",
-  temperature = 0.7,
+  temperature = 1,
   jsonMode = false,
 }) => {
   const client = getAIFoundryClient();

@@ -5,7 +5,7 @@
  */
 
 const AZURE_TRANSLATOR_KEY = import.meta.env.VITE_AZURE_TRANSLATOR_KEY || "";
-const AZURE_TRANSLATOR_REGION = import.meta.env.VITE_AZURE_TRANSLATOR_REGION || "swedencentral";
+const AZURE_TRANSLATOR_REGION = import.meta.env.VITE_AZURE_TRANSLATOR_REGION || "westeurope";
 const AZURE_TRANSLATOR_ENDPOINT = import.meta.env.VITE_AZURE_TRANSLATOR_ENDPOINT || "https://api.cognitive.microsofttranslator.com";
 
 export async function translateText(

@@ -6,7 +6,7 @@ const router = express.Router();
 const getRedirectUri = () => {
   const uri = process.env.SPOTIFY_REDIRECT_URI;
   if (!uri || uri.includes("ngrok-free.dev")) {
-    return "https://webb-mb-hbd5feanavdwdyfp.swedencentral-01.azurewebsites.net/spotify/callback";
+    return "https://movibase-d9f4e5ckarbfgkay.westeurope-01.azurewebsites.net/spotify/callback";
   }
   return uri;
 };

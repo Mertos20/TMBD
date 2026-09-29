@@ -112,7 +112,7 @@ Provide 10 diverse, high-quality, relevant movie or TV show recommendations. Do 
         const aiResponseText = await generateAIText({
           prompt: profileText,
           systemPrompt,
-          temperature: 0.7,
+          temperature: 1,
           jsonMode: true,
         });
         aiResult = JSON.parse(aiResponseText);

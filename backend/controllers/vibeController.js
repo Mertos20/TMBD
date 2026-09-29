@@ -23,7 +23,7 @@ export const generateVibePlaylist = async (req, res) => {
     const rawText = await generateAIText({
       prompt,
       systemPrompt: "You are a music curator creating song playlists matching movie vibes.",
-      temperature: 0.7,
+      temperature: 1,
     });
 
     // Numara temizleme: sadece şarkılar kalsın

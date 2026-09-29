@@ -108,7 +108,7 @@ router.post("/analyze-character", async (req, res) => {
     const text = await generateAIText({
       prompt,
       systemPrompt: "You are an insightful and humorous film critic and user personality analyzer.",
-      temperature: 0.8,
+      temperature: 1,
     });
 
     res.json({ analysis: text });
